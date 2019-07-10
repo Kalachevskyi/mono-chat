@@ -61,6 +61,9 @@ func (r *RootCMD) Init() *cli.App {
 
 
 
+
+
+
 func (r *RootCMD) serve(c *cli.Context) error {
 	if err := r.conf.Validate(); err != nil {
 		return fmt.Errorf("can't validate config: err=%s", err.Error())
