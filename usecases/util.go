@@ -23,6 +23,7 @@ const (
 	DateHeader ReportHeader = 1 + iota
 	DescriptionHeader
 	CategoryHeader
+	BankCategoryHeader
 	AmountHeader
 )
 
@@ -30,5 +31,6 @@ var months = [...]string{
 	"Date",
 	"Description",
 	"Category",
+	"Bank category",
 	"Amount",
 }
