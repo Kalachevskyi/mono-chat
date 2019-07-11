@@ -33,16 +33,23 @@ func (a *Api) GetTransactions(chatID int64, from time.Time, to time.Time) (io.Re
 		return nil, err
 	}
 
-	header := []string{DateHeader.Str(), DescriptionHeader.Str(), CategoryHeader.Str(), AmountHeader.Str()}
+	header := []string{
+		DateHeader.Str(),
+		DescriptionHeader.Str(),
+		CategoryHeader.Str(),
+		BankCategoryHeader.Str(),
+		AmountHeader.Str(),
+	}
 	buf := &bytes.Buffer{}
 	wr := csv.NewWriter(buf)
 	if err := wr.Write(header); err != nil {
 		return nil, errors.Errorf("can't write line: line=%v err=%v", header, err)
 	}
 
-	for _, transaction := range transactions {
-		description := transaction.Description
-		category := strconv.Itoa(transaction.Mcc)
+	for _, tr := range transactions {
+		description := tr.Description
+		category := strconv.Itoa(tr.Mcc)
+		bankCategory := strconv.Itoa(tr.Mcc)
 
 		categoryMapping.Lock()
 		if mapping := categoryMapping.v[chatID]; mapping != nil {
@@ -54,12 +61,11 @@ func (a *Api) GetTransactions(chatID int64, from time.Time, to time.Time) (io.Re
 		}
 		categoryMapping.Unlock()
 
-		amount := fmt.Sprintf("%.2f", float64(transaction.Amount)/100)
-
-		unixTime := time.Unix(int64(transaction.Time), 0).In(a.loc)
+		amount := fmt.Sprintf("%.2f", float64(tr.Amount)/100)
+		unixTime := time.Unix(int64(tr.Time), 0).In(a.loc)
 		date := unixTime.Format(dateTimeReportPattern)
 
-		record := []string{date, description, category, amount}
+		record := []string{date, description, category, bankCategory, amount}
 		if err := wr.Write(record); err != nil {
 			msg := "can't write line: line=%v err=%v"
 			return nil, errors.Errorf(msg, record, err)

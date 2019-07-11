@@ -85,7 +85,13 @@ func (c *Chat) ParseReport(chatID int64, fileName string, r io.Reader) (io.Reade
 	}
 
 	//Set header to file
-	header := []string{DateHeader.Str(), DescriptionHeader.Str(), CategoryHeader.Str(), AmountHeader.Str()}
+	header := []string{
+		DateHeader.Str(),
+		DescriptionHeader.Str(),
+		CategoryHeader.Str(),
+		BankCategoryHeader.Str(),
+		AmountHeader.Str(),
+	}
 	buf := &bytes.Buffer{}
 	wr := csv.NewWriter(buf)
 	if err := wr.Write(header); err != nil {
@@ -98,7 +104,7 @@ func (c *Chat) ParseReport(chatID int64, fileName string, r io.Reader) (io.Reade
 			return nil, errors.New("report template does not match, should be 10")
 		}
 
-		date, category, description, amount := line[0], line[2], line[1], line[3]
+		date, category, bankCategory, description, amount := line[0], line[2], line[2], line[1], line[3]
 
 		if filter != nil {
 			dateTime, err := time.Parse(dateTimeReportPattern, date)
@@ -121,7 +127,7 @@ func (c *Chat) ParseReport(chatID int64, fileName string, r io.Reader) (io.Reade
 		}
 		categoryMapping.Unlock()
 
-		record := []string{date, description, category, amount}
+		record := []string{date, description, category, bankCategory, amount}
 		if err := wr.Write(record); err != nil {
 			msg := "can't write line: line=%v err=%v"
 			return nil, errors.Errorf(msg, record, err)
