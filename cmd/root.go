@@ -16,8 +16,6 @@ type RootCMD struct {
 	conf config.Config
 }
 
-
-
 func (r *RootCMD) Init() *cli.App {
 	cmd := cli.NewApp()
 	cmd.Name = "Mono chat converter"
