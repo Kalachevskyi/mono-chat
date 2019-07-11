@@ -12,11 +12,10 @@ import (
 //Date patterns
 const (
 	yearMonthPattern      = "01.2006"
-	datePattern           = "02.01.2006"
 	dateTimePattern       = "02.01.2006T15.04"
 	dateTimeReportPattern = "02.01.2006 15:04:05"
-	dateFromPattern       = "T00.00"
-	dateToPattern         = "T23.59"
+	timeFromPattern       = "T00.00"
+	timeToPattern         = "T23.59"
 )
 
 //Regexp patterns
@@ -70,13 +69,13 @@ func (d *Date) getFilter(name string) (*filter, error) {
 
 	if d.dateShortRegexp.MatchString(name) {
 		yearMonth := time.Now().Format(yearMonthPattern)
-		from := fmt.Sprintf("%s.%s%s", dates[0], yearMonth, dateFromPattern)
-		to := fmt.Sprintf("%s.%s%s", dates[1], yearMonth, dateToPattern)
+		from := fmt.Sprintf("%s.%s%s", dates[0], yearMonth, timeFromPattern)
+		to := fmt.Sprintf("%s.%s%s", dates[1], yearMonth, timeToPattern)
 		return d.parseTime(from, to, timeDurationDay)
 	}
 
 	if d.dateRegexp.MatchString(name) {
-		return d.parseTime(dates[0]+dateFromPattern, dates[1]+dateToPattern, timeDurationDay)
+		return d.parseTime(dates[0]+timeFromPattern, dates[1]+timeToPattern, timeDurationDay)
 	}
 
 	if d.dateTimeRegexp.MatchString(name) {
@@ -106,21 +105,4 @@ func (d *Date) parseTime(fromStr, toStr string, tr time.Duration) (*filter, erro
 	}
 
 	return &filter, nil
-}
-
-func (a *Api) Today() (from, to time.Time, err error) {
-	today := time.Now().Format(datePattern)
-
-	errMsq := "can't parse time"
-	from, err = time.ParseInLocation(dateTimePattern, today+dateFromPattern, a.loc)
-	if err != nil {
-		return from, to, errors.Wrap(err, errMsq)
-	}
-
-	to, err = time.ParseInLocation(dateTimePattern, today+dateToPattern, a.loc)
-	if err != nil {
-		return from, to, errors.Wrap(err, errMsq)
-	}
-
-	return from, to, nil
 }
