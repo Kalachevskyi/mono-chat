@@ -25,4 +25,4 @@ WORKDIR /root/
 COPY --from=builder /go/src/gitlab.com/Kalachevskyi/mono-chat/mono-chat .
 
 # Run service
-ENTRYPOINT [ "sh", "-c", "./mono-chat --token=$TOKEN --timeout=$TIMEOUT --mono_api_token=$MONO_API_TOKEN" ]
+ENTRYPOINT [ "sh", "-c", "./mono-chat --token=$TOKEN --timeout=$TIMEOUT --redis_url=$REDIS_URL" ]
