@@ -48,11 +48,6 @@ func (r *RootCMD) Init() *cli.App {
 			Value:       "json",
 		},
 		cli.StringFlag{
-			Name:        "mono_api_token",
-			Usage:       `Token to access monobank API"`,
-			Destination: &r.conf.MonoApiToken,
-		},
-		cli.StringFlag{
 			Name:        "redis_url",
 			Usage:       `URL to access to redis service"`,
 			Destination: &r.conf.RedisUrl,
@@ -91,9 +86,11 @@ func (r *RootCMD) serve(c *cli.Context) error {
 		return fmt.Errorf("can't compaile regexp: err=%s", err.Error())
 	}
 
+	zLog.Infof("Authorized on account %s", bot.Self.UserName)
+
 	// Initialize repositories
 	chatRepo := repository.NewChat()
-	monoRepo := repository.NewMono(r.conf.MonoApiToken, zLog)
+	monoRepo := repository.NewMono(zLog)
 	tokeRepo := repository.NewToken(redisClient)
 
 	// Initialize usecases
@@ -112,8 +109,6 @@ func (r *RootCMD) serve(c *cli.Context) error {
 	}
 	chat := chatBuilder.Build()
 	chat.Handle()
-
-	zLog.Infof("Authorized on account %s", bot.Self.UserName)
 
 	return nil
 }

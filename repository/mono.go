@@ -17,23 +17,22 @@ type Logger interface {
 	Errorf(template string, args ...interface{})
 }
 
-func NewMono(token string, log Logger) *Mono {
-	return &Mono{token: token, log: log}
+func NewMono(log Logger) *Mono {
+	return &Mono{log: log}
 }
 
 type Mono struct {
-	token string
-	log   Logger
+	log Logger
 }
 
-func (m *Mono) GetTransactions(from time.Time, to time.Time) ([]entities.Transaction, error) {
+func (m *Mono) GetTransactions(token string, from, to time.Time) ([]entities.Transaction, error) {
 	url := fmt.Sprintf("%s/personal/statement/0/%d/%d", monoDomain, from.Unix(), to.Unix())
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	req.Header.Set("X-Token", m.token)
+	req.Header.Set("X-Token", token)
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

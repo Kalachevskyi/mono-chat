@@ -15,7 +15,7 @@ import (
 const timeLocation = "Europe/Kiev"
 
 type ApiRepo interface {
-	GetTransactions(from time.Time, to time.Time) ([]entities.Transaction, error)
+	GetTransactions(token string, from time.Time, to time.Time) ([]entities.Transaction, error)
 }
 
 func NewApi(apiRepo ApiRepo, dateRegexp Date) *Api {
@@ -27,8 +27,8 @@ type Api struct {
 	Date
 }
 
-func (a *Api) GetTransactions(chatID int64, from time.Time, to time.Time) (io.Reader, error) {
-	transactions, err := a.apiRepo.GetTransactions(from, to)
+func (a *Api) GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error) {
+	transactions, err := a.apiRepo.GetTransactions(token, from, to)
 	if err != nil {
 		return nil, err
 	}

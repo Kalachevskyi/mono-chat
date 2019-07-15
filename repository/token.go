@@ -10,9 +10,10 @@ type Token struct {
 	redisClient *redis.Client
 }
 
-func (t *Token) SaveToken(key, token string) error {
-	if err := t.redisClient.Set(key, token, 0).Err(); err != nil {
-		return err
-	}
-	return nil
+func (t *Token) Set(key, token string) error {
+	return t.redisClient.Set(key, token, 0).Err()
+}
+
+func (t *Token) Get(key string) (string, error) {
+	return t.redisClient.Get(key).Result()
 }

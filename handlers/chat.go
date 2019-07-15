@@ -36,12 +36,13 @@ type CsvUC interface {
 }
 
 type ApiUC interface {
-	GetTransactions(chatID int64, from time.Time, to time.Time) (io.Reader, error)
+	GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error)
 	ParseDate(period string) (from time.Time, to time.Time, err error)
 }
 
 type TokenUC interface {
-	SaveToken(chatID int64, token string) error
+	Set(chatID int64, token string) error
+	Get(chatID int64) (string, error)
 }
 
 type ChatBuilder struct {
@@ -115,15 +116,26 @@ func (c *Chat) handleCommands(u tg.Update) {
 		c.handlePeriodCommand(u, now.BeginningOfMonth(), now.EndOfMonth())
 		return
 	case tokenCommand:
-
+		if err := c.tokeUC.Set(u.Message.Chat.ID, u.Message.CommandArguments()); err != nil {
+			c.sendDefaultErr(u.Message.Chat.ID, err)
+			return
+		}
+		c.sendMSG(tg.NewMessage(u.Message.Chat.ID, "successfully set token"))
 	default:
 		c.sendMSG(tg.NewMessage(u.Message.Chat.ID, defaultErrMSG))
 	}
 }
 
 func (c *Chat) handlePeriodCommand(u tg.Update, from, to time.Time) {
+	chatID := u.Message.Chat.ID
 
-	fileResp, err := c.apiUC.GetTransactions(u.Message.Chat.ID, from, to)
+	token, err := c.tokeUC.Get(chatID)
+	if err != nil {
+		c.sendDefaultErr(u.Message.Chat.ID, err)
+		return
+	}
+
+	fileResp, err := c.apiUC.GetTransactions(token, chatID, from, to)
 	if err != nil {
 		c.sendDefaultErr(u.Message.Chat.ID, err)
 		return

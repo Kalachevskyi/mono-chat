@@ -3,7 +3,8 @@ package usecases
 import "fmt"
 
 type TokenRepo interface {
-	SaveToken(key, token string) error
+	Set(key, token string) error
+	Get(key string) (string, error)
 }
 
 func NewToken(repo TokenRepo) *Token {
@@ -14,7 +15,12 @@ type Token struct {
 	repo TokenRepo
 }
 
-func (c *Token) SaveToken(chatID int64, token string) error {
+func (c *Token) Set(chatID int64, token string) error {
 	key := fmt.Sprintf("token_%v", chatID)
-	return c.repo.SaveToken(key, token)
+	return c.repo.Set(key, token)
+}
+
+func (c *Token) Get(chatID int64) (string, error) {
+	key := fmt.Sprintf("token_%v", chatID)
+	return c.repo.Get(key)
 }
