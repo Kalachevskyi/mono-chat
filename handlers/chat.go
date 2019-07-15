@@ -20,6 +20,7 @@ const (
 	getCommand          = "get"
 	todayCommand        = "today"
 	currentMonthCommand = "month"
+	tokenCommand        = "token"
 )
 
 type Logger interface {
@@ -35,17 +36,32 @@ type CsvUC interface {
 }
 
 type ApiUC interface {
-	GetTransactions(chatID int64, from time.Time, to time.Time) (io.Reader, error)
+	GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error)
 	ParseDate(period string) (from time.Time, to time.Time, err error)
 }
 
-func NewChat(bot *tg.BotAPI, uConf tg.UpdateConfig, log Logger, csvUC CsvUC, apiUC ApiUC) *Chat {
+type TokenUC interface {
+	Set(chatID int64, token string) error
+	Get(chatID int64) (string, error)
+}
+
+type ChatBuilder struct {
+	Bot          *tg.BotAPI
+	UpdateConfig tg.UpdateConfig
+	Log          Logger
+	CsvUC        CsvUC
+	ApiUC        ApiUC
+	TokeUC       TokenUC
+}
+
+func (c *ChatBuilder) Build() *Chat {
 	return &Chat{
-		bot:          bot,
-		updateConfig: uConf,
-		log:          log,
-		csvUC:        csvUC,
-		apiUC:        apiUC,
+		bot:          c.Bot,
+		updateConfig: c.UpdateConfig,
+		log:          c.Log,
+		csvUC:        c.CsvUC,
+		apiUC:        c.ApiUC,
+		tokeUC:       c.TokeUC,
 	}
 }
 
@@ -55,6 +71,7 @@ type Chat struct {
 	log          Logger
 	csvUC        CsvUC
 	apiUC        ApiUC
+	tokeUC       TokenUC
 }
 
 func (c *Chat) Handle() {
@@ -98,14 +115,27 @@ func (c *Chat) handleCommands(u tg.Update) {
 	case currentMonthCommand:
 		c.handlePeriodCommand(u, now.BeginningOfMonth(), now.EndOfMonth())
 		return
+	case tokenCommand:
+		if err := c.tokeUC.Set(u.Message.Chat.ID, u.Message.CommandArguments()); err != nil {
+			c.sendDefaultErr(u.Message.Chat.ID, err)
+			return
+		}
+		c.sendMSG(tg.NewMessage(u.Message.Chat.ID, "successfully set token"))
 	default:
 		c.sendMSG(tg.NewMessage(u.Message.Chat.ID, defaultErrMSG))
 	}
 }
 
 func (c *Chat) handlePeriodCommand(u tg.Update, from, to time.Time) {
+	chatID := u.Message.Chat.ID
 
-	fileResp, err := c.apiUC.GetTransactions(u.Message.Chat.ID, from, to)
+	token, err := c.tokeUC.Get(chatID)
+	if err != nil {
+		c.sendDefaultErr(u.Message.Chat.ID, err)
+		return
+	}
+
+	fileResp, err := c.apiUC.GetTransactions(token, chatID, from, to)
 	if err != nil {
 		c.sendDefaultErr(u.Message.Chat.ID, err)
 		return

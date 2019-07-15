@@ -48,9 +48,9 @@ func (r *RootCMD) Init() *cli.App {
 			Value:       "json",
 		},
 		cli.StringFlag{
-			Name:        "mono_api_token",
-			Usage:       `Token to access monobank API"`,
-			Destination: &r.conf.MonoApiToken,
+			Name:        "redis_url",
+			Usage:       `URL to access to redis service"`,
+			Destination: &r.conf.RedisUrl,
 		},
 	}
 
@@ -71,24 +71,43 @@ func (r *RootCMD) serve(c *cli.Context) error {
 	u := tg.NewUpdate(r.conf.Offset)
 	u.Timeout = r.conf.Timeout
 
+	redisClient, err := infrastructure.NewRedisClient(r.conf.RedisUrl)
+	if err != nil {
+		return err
+	}
+
 	zLog, err := infrastructure.GetLogger(r.conf)
 	if err != nil {
 		return fmt.Errorf("can't load logger: err=%v", err)
 	}
-
-	zLog.Infof("Authorized on account %s", bot.Self.UserName)
 
 	dateRegexp := usecases.Date{}
 	if err := dateRegexp.Init(); err != nil {
 		return fmt.Errorf("can't compaile regexp: err=%s", err.Error())
 	}
 
+	zLog.Infof("Authorized on account %s", bot.Self.UserName)
+
+	// Initialize repositories
 	chatRepo := repository.NewChat()
-	monoRepo := repository.NewMono(r.conf.MonoApiToken, zLog)
+	monoRepo := repository.NewMono(zLog)
+	tokeRepo := repository.NewToken(redisClient)
+
+	// Initialize usecases
 	cvsUC := usecases.NewChat(chatRepo, dateRegexp)
 	apiUC := usecases.NewApi(monoRepo, dateRegexp)
+	tokeUC := usecases.NewToken(tokeRepo)
 
-	chat := handlers.NewChat(bot, u, zLog, cvsUC, apiUC)
+	// Initialize chat handler
+	chatBuilder := handlers.ChatBuilder{
+		Bot:          bot,
+		UpdateConfig: u,
+		Log:          zLog,
+		CsvUC:        cvsUC,
+		ApiUC:        apiUC,
+		TokeUC:       tokeUC,
+	}
+	chat := chatBuilder.Build()
 	chat.Handle()
 
 	return nil
