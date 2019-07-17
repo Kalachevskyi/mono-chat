@@ -1,9 +1,11 @@
 package usecases
 
 import (
+	"strings"
 	"sync"
 
-	"gitlab.com/Kalachevskyi/mono-chat/entities"
+	"github.com/Kalachevskyi/mono-chat/entities"
+	"github.com/pkg/errors"
 )
 
 //Save user category mapping in memory
@@ -33,4 +35,11 @@ var months = [...]string{
 	"Category",
 	"Bank category",
 	"Amount",
+}
+
+func Validate(name string) error {
+	if !strings.HasSuffix(name, csvSuffix) {
+		return errors.New(`chat can only be processed using the file "csv"`)
+	}
+	return nil
 }

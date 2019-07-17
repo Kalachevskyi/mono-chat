@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"gitlab.com/Kalachevskyi/mono-chat/entities"
 )
 
 const csvSuffix = ".csv"
@@ -16,7 +15,7 @@ const csvSuffix = ".csv"
 //timeDurationDay - time duration for days
 const timeDurationDay = 24 * time.Hour
 
-type ChatRepo interface {
+type TelegramRepo interface {
 	GetFile(url string) (io.ReadCloser, error)
 }
 
@@ -26,59 +25,26 @@ type filter struct {
 	truncate time.Duration
 }
 
-func NewChat(repo ChatRepo, d Date) *Chat {
-	return &Chat{
-		repo: repo,
-		date: d,
+func NewFileReport(repo TelegramRepo, d Date) *FileReport {
+	return &FileReport{
+		TelegramRepo: repo,
+		date:         d,
 	}
 }
 
-type Chat struct {
-	repo ChatRepo
+type FileReport struct {
 	date Date
+	TelegramRepo
 }
 
-func (c *Chat) Validate(name string) error {
+func (c *FileReport) Validate(name string) error {
 	if !strings.HasSuffix(name, csvSuffix) {
 		return errors.New(`chat can only be processed using the file "csv"`)
 	}
 	return nil
 }
 
-func (c *Chat) GetFile(url string) (io.ReadCloser, error) {
-	return c.repo.GetFile(url)
-}
-
-func (c *Chat) ParseMapping(chatID int64, r io.Reader) error {
-	lines, err := csv.NewReader(r).ReadAll()
-	if err != nil {
-		return errors.Errorf("can't read file: err=%s", err)
-	}
-
-	mapping := make(map[string]entities.CategoryMapping)
-	for _, line := range lines {
-		if len(line) != 3 {
-			return errors.New("mapping should have 3 column")
-		}
-
-		categoryMapping := entities.CategoryMapping{
-			Mono:        line[0],
-			Description: line[1],
-			App:         line[2],
-		}
-
-		key := line[0] + line[1]
-
-		mapping[key] = categoryMapping
-	}
-
-	categoryMapping.Lock()
-	categoryMapping.v[chatID] = mapping
-	categoryMapping.Unlock()
-	return nil
-}
-
-func (c *Chat) ParseReport(chatID int64, fileName string, r io.Reader) (io.Reader, error) {
+func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reader, error) {
 	lines, err := csv.NewReader(r).ReadAll()
 	if err != nil {
 		return nil, errors.Errorf("can't read file: err=%s", err)
@@ -137,7 +103,7 @@ func (c *Chat) ParseReport(chatID int64, fileName string, r io.Reader) (io.Reade
 	return buf, nil
 }
 
-func (c *Chat) applyFilter(d time.Time, f filter) bool {
+func (c *FileReport) applyFilter(d time.Time, f filter) bool {
 	if d.Equal(f.start) || d.Equal(f.end) {
 		return true
 	}

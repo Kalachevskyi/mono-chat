@@ -3,13 +3,13 @@ package cmd
 import (
 	"fmt"
 
+	"github.com/Kalachevskyi/mono-chat/config"
+	h "github.com/Kalachevskyi/mono-chat/handlers"
+	"github.com/Kalachevskyi/mono-chat/infrastructure"
+	"github.com/Kalachevskyi/mono-chat/repository"
+	"github.com/Kalachevskyi/mono-chat/usecases"
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/urfave/cli"
-	"gitlab.com/Kalachevskyi/mono-chat/config"
-	"gitlab.com/Kalachevskyi/mono-chat/handlers"
-	"gitlab.com/Kalachevskyi/mono-chat/infrastructure"
-	"gitlab.com/Kalachevskyi/mono-chat/repository"
-	"gitlab.com/Kalachevskyi/mono-chat/usecases"
 )
 
 type RootCMD struct {
@@ -71,6 +71,11 @@ func (r *RootCMD) serve(c *cli.Context) error {
 	u := tg.NewUpdate(r.conf.Offset)
 	u.Timeout = r.conf.Timeout
 
+	updates, err := bot.GetUpdatesChan(u)
+	if err != nil {
+		return fmt.Errorf("can't get updates: %v", err.Error())
+	}
+
 	redisClient, err := infrastructure.NewRedisClient(r.conf.RedisUrl)
 	if err != nil {
 		return err
@@ -81,31 +86,26 @@ func (r *RootCMD) serve(c *cli.Context) error {
 		return fmt.Errorf("can't load logger: err=%v", err)
 	}
 
-	dateRegexp := usecases.Date{}
-	if err := dateRegexp.Init(); err != nil {
+	dateUC := usecases.Date{}
+	if err := dateUC.Init(); err != nil {
 		return fmt.Errorf("can't compaile regexp: err=%s", err.Error())
 	}
 
 	zLog.Infof("Authorized on account %s", bot.Self.UserName)
 
-	// Initialize repositories
-	chatRepo := repository.NewChat()
 	monoRepo := repository.NewMono(zLog)
 	tokeRepo := repository.NewToken(redisClient)
 
 	// Initialize usecases
-	cvsUC := usecases.NewChat(chatRepo, dateRegexp)
-	apiUC := usecases.NewApi(monoRepo, dateRegexp)
+	apiUC := usecases.NewApi(monoRepo, dateUC)
 	tokeUC := usecases.NewToken(tokeRepo)
 
 	// Initialize chat handler
-	chatBuilder := handlers.ChatBuilder{
-		Bot:          bot,
-		UpdateConfig: u,
-		Log:          zLog,
-		CsvUC:        cvsUC,
-		ApiUC:        apiUC,
-		TokeUC:       tokeUC,
+	chatBuilder := h.ChatBuilder{
+		Updates:  updates,
+		ApiUC:    apiUC,
+		TokeUC:   tokeUC,
+		Handlers: handlers(bot, zLog, dateUC),
 	}
 	chat := chatBuilder.Build()
 	chat.Handle()

@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Kalachevskyi/mono-chat/entities"
 	"github.com/pkg/errors"
-	"gitlab.com/Kalachevskyi/mono-chat/entities"
 )
 
 const timeLocation = "Europe/Kiev"

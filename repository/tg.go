@@ -7,13 +7,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-func NewChat() *Chat {
-	return &Chat{}
+func NewTelegram() *Telegram {
+	return &Telegram{}
 }
 
-type Chat struct{}
+type Telegram struct{}
 
-func (c *Chat) GetFile(url string) (io.ReadCloser, error) {
+func (c *Telegram) GetFile(url string) (io.ReadCloser, error) {
 	resp, err := http.Get(url)
 	if err != nil {
 

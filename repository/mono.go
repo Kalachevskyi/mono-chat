@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Kalachevskyi/mono-chat/entities"
 	"github.com/pkg/errors"
-	"gitlab.com/Kalachevskyi/mono-chat/entities"
 )
 
 const monoDomain = "https://api.monobank.ua"
