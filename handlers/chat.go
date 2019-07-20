@@ -2,7 +2,6 @@ package handlers
 
 import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
-	"github.com/pkg/errors"
 )
 
 //Error messages
@@ -27,31 +26,22 @@ type Handler interface {
 	Handle(u tg.Update)
 }
 
-type ChatBuilder struct {
-	Updates  tg.UpdatesChannel
-	TokeUC   TokenUC
-	Handlers map[HandlerKey]Handler
-}
-
-func (c *ChatBuilder) Build() *Chat {
+func NewChat(updates tg.UpdatesChannel, handlers map[HandlerKey]Handler, botWrapper *BotWrapper) *Chat {
 	return &Chat{
-		updates:  c.Updates,
-		tokeUC:   c.TokeUC,
-		handlers: c.Handlers,
+		updates:    updates,
+		handlers:   handlers,
+		BotWrapper: botWrapper,
 	}
 }
 
 type Chat struct {
 	updates  tg.UpdatesChannel
-	tokeUC   TokenUC
 	handlers map[HandlerKey]Handler
-	BotWrapper
+	*BotWrapper
 }
 
 func (c *Chat) Handle() {
 	for u := range c.updates {
-		chatID := u.Message.Chat.ID
-
 		if u.Message == nil { // ignore any non-Message Updates
 			continue
 		}
@@ -69,24 +59,21 @@ func (c *Chat) Handle() {
 					continue
 				}
 			}
-			msg := "can't find handler %v"
-			c.sendDefaultErr(chatID, errors.Errorf(msg, FileReportHandler))
 			continue
 		}
 
 		if u.Message.Command() != "" {
 			switch u.Message.Command() {
 			case getCommand, todayCommand, currentMonthCommand:
-				if h, ok := c.handlers[Transactions]; ok {
+				if h, ok := c.handlers[TransactionsHandler]; ok {
 					h.Handle(u)
 					continue
 				}
 			case tokenCommand:
-				if err := c.tokeUC.Set(u.Message.Chat.ID, u.Message.CommandArguments()); err != nil {
-					c.sendDefaultErr(u.Message.Chat.ID, err)
-					return
+				if h, ok := c.handlers[TokenHandler]; ok {
+					h.Handle(u)
+					continue
 				}
-				c.sendMSG(tg.NewMessage(u.Message.Chat.ID, "successfully set token"))
 				return
 			}
 		}

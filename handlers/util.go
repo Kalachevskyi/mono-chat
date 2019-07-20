@@ -14,7 +14,8 @@ type HandlerKey int
 const (
 	FileReportHandler HandlerKey = 1 + iota
 	MappingHandler
-	Transactions
+	TransactionsHandler
+	TokenHandler
 )
 
 // ErrStack - add stack to error, work with "github.com/pkg/errors" package

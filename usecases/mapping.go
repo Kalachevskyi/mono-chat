@@ -2,18 +2,31 @@ package usecases
 
 import (
 	"encoding/csv"
+	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/Kalachevskyi/mono-chat/entities"
 	"github.com/pkg/errors"
 )
 
-func NewMapping(telegramRepo TelegramRepo) *Mapping {
-	return &Mapping{TelegramRepo: telegramRepo}
+const mappingSufix = "_mapping"
+
+type MappingRepo interface {
+	Set(key string, val map[string]entities.CategoryMapping) error
+	Get(key string) (map[string]entities.CategoryMapping, error)
+}
+
+func NewMapping(mappingRepo MappingRepo, telegramRepo TelegramRepo) *Mapping {
+	return &Mapping{
+		mappingRepo:  mappingRepo,
+		TelegramRepo: telegramRepo,
+	}
 }
 
 type Mapping struct {
+	mappingRepo MappingRepo
 	TelegramRepo
 }
 
@@ -47,8 +60,6 @@ func (c *Mapping) Parse(chatID int64, r io.Reader) error {
 		mapping[key] = categoryMapping
 	}
 
-	categoryMapping.Lock()
-	categoryMapping.v[chatID] = mapping
-	categoryMapping.Unlock()
-	return nil
+	key := fmt.Sprintf("%s%s", strconv.Itoa(int(chatID)), mappingSufix)
+	return c.mappingRepo.Set(key, mapping)
 }

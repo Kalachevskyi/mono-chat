@@ -3,12 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/Kalachevskyi/mono-chat/config"
-	h "github.com/Kalachevskyi/mono-chat/handlers"
 	"github.com/Kalachevskyi/mono-chat/infrastructure"
-	"github.com/Kalachevskyi/mono-chat/repository"
-	"github.com/Kalachevskyi/mono-chat/usecases"
-	tg "github.com/go-telegram-bot-api/telegram-bot-api"
+
+	"github.com/Kalachevskyi/mono-chat/config"
 	"github.com/urfave/cli"
 )
 
@@ -62,52 +59,11 @@ func (r *RootCMD) serve(c *cli.Context) error {
 		return fmt.Errorf("can't validate config: err=%s", err.Error())
 	}
 
-	bot, err := tg.NewBotAPI(r.conf.Token)
-	if err != nil {
-		return fmt.Errorf("can't initialize Telegram: err=%s", err.Error())
-	}
-
-	bot.Debug = r.conf.Debug
-	u := tg.NewUpdate(r.conf.Offset)
-	u.Timeout = r.conf.Timeout
-
-	updates, err := bot.GetUpdatesChan(u)
-	if err != nil {
-		return fmt.Errorf("can't get updates: %v", err.Error())
-	}
-
-	redisClient, err := infrastructure.NewRedisClient(r.conf.RedisUrl)
+	chat, err := infrastructure.Build(r.conf)
 	if err != nil {
 		return err
 	}
 
-	zLog, err := infrastructure.GetLogger(r.conf)
-	if err != nil {
-		return fmt.Errorf("can't load logger: err=%v", err)
-	}
-
-	dateUC := usecases.Date{}
-	if err := dateUC.Init(); err != nil {
-		return fmt.Errorf("can't compaile regexp: err=%s", err.Error())
-	}
-
-	zLog.Infof("Authorized on account %s", bot.Self.UserName)
-
-	monoRepo := repository.NewMono(zLog)
-	tokeRepo := repository.NewToken(redisClient)
-
-	// Initialize usecases
-	apiUC := usecases.NewApi(monoRepo, dateUC)
-	tokeUC := usecases.NewToken(tokeRepo)
-
-	// Initialize chat handler
-	chatBuilder := h.ChatBuilder{
-		Updates:  updates,
-		ApiUC:    apiUC,
-		TokeUC:   tokeUC,
-		Handlers: handlers(bot, zLog, dateUC),
-	}
-	chat := chatBuilder.Build()
 	chat.Handle()
 
 	return nil

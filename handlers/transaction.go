@@ -5,14 +5,17 @@ import (
 	"io"
 	"time"
 
-	"github.com/jinzhu/now"
-
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
+	"github.com/jinzhu/now"
 )
 
 type ApiUC interface {
 	GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error)
 	ParseDate(period string) (from time.Time, to time.Time, err error)
+}
+
+func NewTransaction(tokenUC TokenUC, apiUC ApiUC, botWrapper *BotWrapper) *Transaction {
+	return &Transaction{tokenUC: tokenUC, apiUC: apiUC, BotWrapper: botWrapper}
 }
 
 type Transaction struct {

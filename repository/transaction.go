@@ -17,7 +17,7 @@ type Logger interface {
 	Errorf(template string, args ...interface{})
 }
 
-func NewMono(log Logger) *Mono {
+func NewTransaction(log Logger) *Mono {
 	return &Mono{log: log}
 }
 

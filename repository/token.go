@@ -1,6 +1,9 @@
 package repository
 
-import "github.com/go-redis/redis"
+import (
+	"github.com/go-redis/redis"
+	"github.com/pkg/errors"
+)
 
 func NewToken(redisClient *redis.Client) *Token {
 	return &Token{redisClient: redisClient}
@@ -11,9 +14,16 @@ type Token struct {
 }
 
 func (t *Token) Set(key, token string) error {
-	return t.redisClient.Set(key, token, 0).Err()
+	if err := t.redisClient.Set(key, token, 0).Err(); err != nil {
+		return errors.WithStack(err)
+	}
+	return nil
 }
 
 func (t *Token) Get(key string) (string, error) {
-	return t.redisClient.Get(key).Result()
+	val, err := t.redisClient.Get(key).Result()
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	return val, nil
 }

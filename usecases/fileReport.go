@@ -3,7 +3,9 @@ package usecases
 import (
 	"bytes"
 	"encoding/csv"
+	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 
@@ -25,15 +27,19 @@ type filter struct {
 	truncate time.Duration
 }
 
-func NewFileReport(repo TelegramRepo, d Date) *FileReport {
+func NewFileReport(date Date, mappingRepo MappingRepo, log Logger, telegramRepo TelegramRepo) *FileReport {
 	return &FileReport{
-		TelegramRepo: repo,
-		date:         d,
+		date:         date,
+		mappingRepo:  mappingRepo,
+		log:          log,
+		TelegramRepo: telegramRepo,
 	}
 }
 
 type FileReport struct {
-	date Date
+	date        Date
+	mappingRepo MappingRepo
+	log         Logger
 	TelegramRepo
 }
 
@@ -64,6 +70,12 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 		return nil, errors.Errorf("can't write line: line=%v err=%v", header, err)
 	}
 
+	key := fmt.Sprintf("%s%s", strconv.Itoa(int(chatID)), mappingSufix)
+	catMap, err := c.mappingRepo.Get(key) //Category mapping
+	if err != nil {
+		c.log.Error(err)
+	}
+
 	filter, _ := c.date.getFilter(fileName)
 	for _, line := range lines {
 		if len(line) != 10 { //10 - default columns in a mono bank template
@@ -83,15 +95,13 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 			}
 		}
 
-		categoryMapping.Lock()
-		if mapping := categoryMapping.v[chatID]; mapping != nil {
-			if m, ok := mapping[category+description]; ok {
+		if catMap != nil {
+			if m, ok := catMap[category+description]; ok {
 				category = m.App
-			} else if m, ok := mapping[category]; ok {
+			} else if m, ok := catMap[category]; ok {
 				category = m.App
 			}
 		}
-		categoryMapping.Unlock()
 
 		record := []string{date, description, category, bankCategory, amount}
 		if err := wr.Write(record); err != nil {
