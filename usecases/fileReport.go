@@ -3,12 +3,13 @@ package usecases
 import (
 	"bytes"
 	"encoding/csv"
+	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-	"gitlab.com/Kalachevskyi/mono-chat/entities"
 )
 
 const csvSuffix = ".csv"
@@ -16,7 +17,7 @@ const csvSuffix = ".csv"
 //timeDurationDay - time duration for days
 const timeDurationDay = 24 * time.Hour
 
-type ChatRepo interface {
+type TelegramRepo interface {
 	GetFile(url string) (io.ReadCloser, error)
 }
 
@@ -26,59 +27,30 @@ type filter struct {
 	truncate time.Duration
 }
 
-func NewChat(repo ChatRepo, d Date) *Chat {
-	return &Chat{
-		repo: repo,
-		date: d,
+func NewFileReport(date Date, mappingRepo MappingRepo, log Logger, telegramRepo TelegramRepo) *FileReport {
+	return &FileReport{
+		date:         date,
+		mappingRepo:  mappingRepo,
+		log:          log,
+		TelegramRepo: telegramRepo,
 	}
 }
 
-type Chat struct {
-	repo ChatRepo
-	date Date
+type FileReport struct {
+	date        Date
+	mappingRepo MappingRepo
+	log         Logger
+	TelegramRepo
 }
 
-func (c *Chat) Validate(name string) error {
+func (c *FileReport) Validate(name string) error {
 	if !strings.HasSuffix(name, csvSuffix) {
 		return errors.New(`chat can only be processed using the file "csv"`)
 	}
 	return nil
 }
 
-func (c *Chat) GetFile(url string) (io.ReadCloser, error) {
-	return c.repo.GetFile(url)
-}
-
-func (c *Chat) ParseMapping(chatID int64, r io.Reader) error {
-	lines, err := csv.NewReader(r).ReadAll()
-	if err != nil {
-		return errors.Errorf("can't read file: err=%s", err)
-	}
-
-	mapping := make(map[string]entities.CategoryMapping)
-	for _, line := range lines {
-		if len(line) != 3 {
-			return errors.New("mapping should have 3 column")
-		}
-
-		categoryMapping := entities.CategoryMapping{
-			Mono:        line[0],
-			Description: line[1],
-			App:         line[2],
-		}
-
-		key := line[0] + line[1]
-
-		mapping[key] = categoryMapping
-	}
-
-	categoryMapping.Lock()
-	categoryMapping.v[chatID] = mapping
-	categoryMapping.Unlock()
-	return nil
-}
-
-func (c *Chat) ParseReport(chatID int64, fileName string, r io.Reader) (io.Reader, error) {
+func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reader, error) {
 	lines, err := csv.NewReader(r).ReadAll()
 	if err != nil {
 		return nil, errors.Errorf("can't read file: err=%s", err)
@@ -96,6 +68,12 @@ func (c *Chat) ParseReport(chatID int64, fileName string, r io.Reader) (io.Reade
 	wr := csv.NewWriter(buf)
 	if err := wr.Write(header); err != nil {
 		return nil, errors.Errorf("can't write line: line=%v err=%v", header, err)
+	}
+
+	key := fmt.Sprintf("%s%s", strconv.Itoa(int(chatID)), mappingSufix)
+	catMap, err := c.mappingRepo.Get(key) //Category mapping
+	if err != nil {
+		c.log.Error(err)
 	}
 
 	filter, _ := c.date.getFilter(fileName)
@@ -117,15 +95,13 @@ func (c *Chat) ParseReport(chatID int64, fileName string, r io.Reader) (io.Reade
 			}
 		}
 
-		categoryMapping.Lock()
-		if mapping := categoryMapping.v[chatID]; mapping != nil {
-			if m, ok := mapping[category+description]; ok {
+		if catMap != nil {
+			if m, ok := catMap[category+description]; ok {
 				category = m.App
-			} else if m, ok := mapping[category]; ok {
+			} else if m, ok := catMap[category]; ok {
 				category = m.App
 			}
 		}
-		categoryMapping.Unlock()
 
 		record := []string{date, description, category, bankCategory, amount}
 		if err := wr.Write(record); err != nil {
@@ -137,7 +113,7 @@ func (c *Chat) ParseReport(chatID int64, fileName string, r io.Reader) (io.Reade
 	return buf, nil
 }
 
-func (c *Chat) applyFilter(d time.Time, f filter) bool {
+func (c *FileReport) applyFilter(d time.Time, f filter) bool {
 	if d.Equal(f.start) || d.Equal(f.end) {
 		return true
 	}

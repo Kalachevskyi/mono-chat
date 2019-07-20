@@ -1,7 +1,7 @@
 package infrastructure
 
 import (
-	"gitlab.com/Kalachevskyi/mono-chat/config"
+	"github.com/Kalachevskyi/mono-chat/config"
 	"go.uber.org/zap"
 )
 

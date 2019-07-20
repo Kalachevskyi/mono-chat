@@ -1,10 +1,10 @@
 FROM golang as builder
 
 # Copy the local package files to the container's workspace.
-ADD . /go/src/gitlab.com/Kalachevskyi/mono-chat
+ADD . /go/src/github.com/Kalachevskyi/mono-chat
 
 # Changing working directory.
-WORKDIR /go/src/gitlab.com/Kalachevskyi/mono-chat
+WORKDIR /go/src/github.com/Kalachevskyi/mono-chat
 
 RUN export GO111MODULE=on && go mod download && go mod vendor
 
@@ -22,7 +22,7 @@ RUN apk add tzdata
 WORKDIR /root/
 
 # Copy the Pre-built binary file from the previous stage
-COPY --from=builder /go/src/gitlab.com/Kalachevskyi/mono-chat/mono-chat .
+COPY --from=builder /go/src/github.com/Kalachevskyi/mono-chat/mono-chat .
 
 # Run service
 ENTRYPOINT [ "sh", "-c", "./mono-chat --token=$TOKEN --timeout=$TIMEOUT --redis_url=$REDIS_URL" ]

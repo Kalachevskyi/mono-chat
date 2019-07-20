@@ -8,26 +8,37 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Kalachevskyi/mono-chat/entities"
 	"github.com/pkg/errors"
-	"gitlab.com/Kalachevskyi/mono-chat/entities"
 )
 
 const timeLocation = "Europe/Kiev"
 
-type ApiRepo interface {
+type Logger interface {
+	Error(args ...interface{})
+}
+
+type TransactionRepo interface {
 	GetTransactions(token string, from time.Time, to time.Time) ([]entities.Transaction, error)
 }
 
-func NewApi(apiRepo ApiRepo, dateRegexp Date) *Api {
-	return &Api{apiRepo: apiRepo, Date: dateRegexp}
+func NewTransaction(trRepo TransactionRepo, mapRepo MappingRepo, log Logger, date Date) *Transaction {
+	return &Transaction{
+		apiRepo:     trRepo,
+		mappingRepo: mapRepo,
+		log:         log,
+		Date:        date,
+	}
 }
 
-type Api struct {
-	apiRepo ApiRepo
+type Transaction struct {
+	apiRepo     TransactionRepo
+	mappingRepo MappingRepo
+	log         Logger
 	Date
 }
 
-func (a *Api) GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error) {
+func (a *Transaction) GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error) {
 	transactions, err := a.apiRepo.GetTransactions(token, from, to)
 	if err != nil {
 		return nil, err
@@ -46,20 +57,24 @@ func (a *Api) GetTransactions(token string, chatID int64, from time.Time, to tim
 		return nil, errors.Errorf("can't write line: line=%v err=%v", header, err)
 	}
 
+	key := fmt.Sprintf("%s%s", strconv.Itoa(int(chatID)), mappingSufix)
+	catMap, err := a.mappingRepo.Get(key) //Category mapping
+	if err != nil {
+		a.log.Error(err)
+	}
+
 	for _, tr := range transactions {
 		description := tr.Description
 		category := strconv.Itoa(tr.Mcc)
 		bankCategory := strconv.Itoa(tr.Mcc)
 
-		categoryMapping.Lock()
-		if mapping := categoryMapping.v[chatID]; mapping != nil {
-			if m, ok := mapping[category+description]; ok {
+		if catMap != nil {
+			if m, ok := catMap[category+description]; ok {
 				category = m.App
-			} else if m, ok := mapping[category]; ok {
+			} else if m, ok := catMap[category]; ok {
 				category = m.App
 			}
 		}
-		categoryMapping.Unlock()
 
 		amount := fmt.Sprintf("%.2f", float64(tr.Amount)/100)
 		unixTime := time.Unix(int64(tr.Time), 0).In(a.loc)
@@ -76,7 +91,7 @@ func (a *Api) GetTransactions(token string, chatID int64, from time.Time, to tim
 	return buf, nil
 }
 
-func (a *Api) ParseDate(period string) (from time.Time, to time.Time, err error) {
+func (a *Transaction) ParseDate(period string) (from time.Time, to time.Time, err error) {
 	filter, err := a.getFilter(period)
 	if err != nil {
 		return

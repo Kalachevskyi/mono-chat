@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"gitlab.com/Kalachevskyi/mono-chat/cmd"
+	"github.com/Kalachevskyi/mono-chat/cmd"
 )
 
 //main - start mono-chat app...

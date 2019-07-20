@@ -1,13 +1,7 @@
 package handlers
 
 import (
-	"fmt"
-	"io"
-	"time"
-
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
-	"github.com/jinzhu/now"
-	"github.com/pkg/errors"
 )
 
 //Error messages
@@ -28,183 +22,62 @@ type Logger interface {
 	Errorf(template string, args ...interface{})
 }
 
-type CsvUC interface {
-	Validate(name string) error
-	GetFile(url string) (io.ReadCloser, error)
-	ParseMapping(chatID int64, r io.Reader) error
-	ParseReport(chatID int64, fileName string, r io.Reader) (io.Reader, error)
+type Handler interface {
+	Handle(u tg.Update)
 }
 
-type ApiUC interface {
-	GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error)
-	ParseDate(period string) (from time.Time, to time.Time, err error)
-}
-
-type TokenUC interface {
-	Set(chatID int64, token string) error
-	Get(chatID int64) (string, error)
-}
-
-type ChatBuilder struct {
-	Bot          *tg.BotAPI
-	UpdateConfig tg.UpdateConfig
-	Log          Logger
-	CsvUC        CsvUC
-	ApiUC        ApiUC
-	TokeUC       TokenUC
-}
-
-func (c *ChatBuilder) Build() *Chat {
+func NewChat(updates tg.UpdatesChannel, handlers map[HandlerKey]Handler, botWrapper *BotWrapper) *Chat {
 	return &Chat{
-		bot:          c.Bot,
-		updateConfig: c.UpdateConfig,
-		log:          c.Log,
-		csvUC:        c.CsvUC,
-		apiUC:        c.ApiUC,
-		tokeUC:       c.TokeUC,
+		updates:    updates,
+		handlers:   handlers,
+		BotWrapper: botWrapper,
 	}
 }
 
 type Chat struct {
-	bot          *tg.BotAPI
-	updateConfig tg.UpdateConfig
-	log          Logger
-	csvUC        CsvUC
-	apiUC        ApiUC
-	tokeUC       TokenUC
+	updates  tg.UpdatesChannel
+	handlers map[HandlerKey]Handler
+	*BotWrapper
 }
 
 func (c *Chat) Handle() {
-	updates, err := c.bot.GetUpdatesChan(c.updateConfig)
-	if err != nil {
-		c.log.Errorf("can't get updates: %v", ErrStack(err))
-	}
-
-	for u := range updates {
+	for u := range c.updates {
 		if u.Message == nil { // ignore any non-Message Updates
 			continue
 		}
 
 		if u.Message.Document != nil {
-			c.handleFile(u)
+			switch u.Message.Document.FileName {
+			case "mapping.csv":
+				if h, ok := c.handlers[MappingHandler]; ok {
+					h.Handle(u)
+					continue
+				}
+			default:
+				if h, ok := c.handlers[FileReportHandler]; ok {
+					h.Handle(u)
+					continue
+				}
+			}
 			continue
 		}
 
 		if u.Message.Command() != "" {
-			c.handleCommands(u)
-			continue
+			switch u.Message.Command() {
+			case getCommand, todayCommand, currentMonthCommand:
+				if h, ok := c.handlers[TransactionsHandler]; ok {
+					h.Handle(u)
+					continue
+				}
+			case tokenCommand:
+				if h, ok := c.handlers[TokenHandler]; ok {
+					h.Handle(u)
+					continue
+				}
+				return
+			}
 		}
 
 		c.sendMSG(tg.NewMessage(u.Message.Chat.ID, defaultErrMSG))
-	}
-}
-
-func (c *Chat) handleCommands(u tg.Update) {
-	switch u.Message.Command() {
-	case getCommand:
-		from, to, err := c.apiUC.ParseDate(u.Message.CommandArguments())
-		if err != nil {
-			c.sendDefaultErr(u.Message.Chat.ID, err)
-			return
-		}
-		c.handlePeriodCommand(u, from, to)
-		return
-	case todayCommand:
-		c.handlePeriodCommand(u, now.BeginningOfDay(), now.EndOfDay())
-		return
-	case currentMonthCommand:
-		c.handlePeriodCommand(u, now.BeginningOfMonth(), now.EndOfMonth())
-		return
-	case tokenCommand:
-		if err := c.tokeUC.Set(u.Message.Chat.ID, u.Message.CommandArguments()); err != nil {
-			c.sendDefaultErr(u.Message.Chat.ID, err)
-			return
-		}
-		c.sendMSG(tg.NewMessage(u.Message.Chat.ID, "successfully set token"))
-	default:
-		c.sendMSG(tg.NewMessage(u.Message.Chat.ID, defaultErrMSG))
-	}
-}
-
-func (c *Chat) handlePeriodCommand(u tg.Update, from, to time.Time) {
-	chatID := u.Message.Chat.ID
-
-	token, err := c.tokeUC.Get(chatID)
-	if err != nil {
-		c.sendDefaultErr(u.Message.Chat.ID, err)
-		return
-	}
-
-	fileResp, err := c.apiUC.GetTransactions(token, chatID, from, to)
-	if err != nil {
-		c.sendDefaultErr(u.Message.Chat.ID, err)
-		return
-	}
-	reader := tg.FileReader{
-		Name:   fmt.Sprintf("%s-%s%s", from.Format(dateTimePattern), to.Format(dateTimePattern), ".csv"),
-		Reader: fileResp,
-		Size:   -1,
-	}
-	msg := tg.NewDocumentUpload(u.Message.Chat.ID, reader)
-	c.sendMSG(msg)
-}
-
-func (c *Chat) handleFile(u tg.Update) {
-	if err := c.csvUC.Validate(u.Message.Document.FileName); err != nil {
-		c.sendDefaultErr(u.Message.Chat.ID, err)
-		return
-	}
-
-	fileTG, err := c.bot.GetFile(tg.FileConfig{FileID: u.Message.Document.FileID})
-	if err != nil {
-		c.sendDefaultErr(u.Message.Chat.ID, err)
-		return
-	}
-
-	file, err := c.csvUC.GetFile(fileTG.Link(c.bot.Token))
-	if err != nil {
-		c.sendDefaultErr(u.Message.Chat.ID, err)
-		return
-	}
-
-	switch u.Message.Document.FileName {
-	case "mapping.csv":
-		if err := c.csvUC.ParseMapping(u.Message.Chat.ID, file); err != nil {
-			c.sendDefaultErr(u.Message.Chat.ID, err)
-			return
-		}
-		c.sendMSG(tg.NewMessage(u.Message.Chat.ID, "mapping successfully loaded"))
-	default:
-		fileResp, err := c.csvUC.ParseReport(u.Message.Chat.ID, u.Message.Document.FileName, file)
-		if err != nil {
-			c.sendDefaultErr(u.Message.Chat.ID, err)
-			return
-		}
-		name := u.Message.Document.FileName
-		reader := tg.FileReader{
-			Name:   name,
-			Reader: fileResp,
-			Size:   -1,
-		}
-		msg := tg.NewDocumentUpload(u.Message.Chat.ID, reader)
-		c.sendMSG(msg)
-	}
-	c.close(file)
-}
-
-func (c *Chat) sendDefaultErr(chatID int64, err error) {
-	c.log.Error(ErrStack(err))
-	c.sendMSG(tg.NewMessage(chatID, defaultErrMSG))
-}
-
-func (c *Chat) sendMSG(msg tg.Chattable) {
-	if _, err := c.bot.Send(msg); err != nil {
-		c.log.Errorf("can't send err message: err=%+v", errors.WithStack(err))
-	}
-}
-
-func (c *Chat) close(closer io.Closer) {
-	if err := closer.Close(); err != nil {
-		c.log.Errorf("handlers.Chat.close: can't close body: err=%s", ErrStack(err))
 	}
 }

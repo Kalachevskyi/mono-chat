@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Kalachevskyi/mono-chat/entities"
 	"github.com/pkg/errors"
-	"gitlab.com/Kalachevskyi/mono-chat/entities"
 )
 
 const monoDomain = "https://api.monobank.ua"
@@ -17,7 +17,7 @@ type Logger interface {
 	Errorf(template string, args ...interface{})
 }
 
-func NewMono(log Logger) *Mono {
+func NewTransaction(log Logger) *Mono {
 	return &Mono{log: log}
 }
 
