@@ -36,10 +36,8 @@ func (t *Transaction) Handle(u tg.Update) {
 		from, to = fromTime, toTime
 	case todayCommand:
 		from, to = now.BeginningOfDay(), now.EndOfDay()
-		return
 	case currentMonthCommand:
 		from, to = now.BeginningOfMonth(), now.EndOfMonth()
-		return
 	default:
 
 	}

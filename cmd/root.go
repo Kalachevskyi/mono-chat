@@ -64,6 +64,8 @@ func (r *RootCMD) serve(c *cli.Context) error {
 		return err
 	}
 
+	fmt.Println("mono_chat_bot is running")
+
 	chat.Handle()
 
 	return nil
