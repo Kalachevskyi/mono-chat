@@ -39,7 +39,7 @@ type Transaction struct {
 }
 
 func (a *Transaction) GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error) {
-	transactions, err := a.apiRepo.GetTransactions(token, from, to)
+	transactions, err := a.apiRepo.GetTransactions(token, from.In(a.loc), to.In(a.loc))
 	if err != nil {
 		return nil, err
 	}
