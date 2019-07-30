@@ -39,7 +39,7 @@ type Transaction struct {
 }
 
 func (a *Transaction) GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error) {
-	transactions, err := a.apiRepo.GetTransactions(token, from.In(a.loc), to.In(a.loc))
+	transactions, err := a.apiRepo.GetTransactions(token, from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +89,10 @@ func (a *Transaction) GetTransactions(token string, chatID int64, from time.Time
 	wr.Flush()
 
 	return buf, nil
+}
+
+func (a Transaction) Locale() *time.Location {
+	return a.loc
 }
 
 func (a *Transaction) ParseDate(period string) (from time.Time, to time.Time, err error) {

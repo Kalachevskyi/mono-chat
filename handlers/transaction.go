@@ -5,6 +5,8 @@ import (
 	"io"
 	"time"
 
+	"github.com/pkg/errors"
+
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/jinzhu/now"
 )
@@ -12,6 +14,7 @@ import (
 type ApiUC interface {
 	GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error)
 	ParseDate(period string) (from time.Time, to time.Time, err error)
+	Locale() *time.Location
 }
 
 func NewTransaction(tokenUC TokenUC, apiUC ApiUC, botWrapper *BotWrapper) *Transaction {
@@ -25,7 +28,10 @@ type Transaction struct {
 }
 
 func (t *Transaction) Handle(u tg.Update) {
-	var from, to time.Time
+	var (
+		from, to time.Time
+		timeNow  = now.New(time.Now().In(t.apiUC.Locale()))
+	)
 	switch u.Message.Command() {
 	case getCommand:
 		fromTime, toTime, err := t.apiUC.ParseDate(u.Message.CommandArguments())
@@ -35,11 +41,12 @@ func (t *Transaction) Handle(u tg.Update) {
 		}
 		from, to = fromTime, toTime
 	case todayCommand:
-		from, to = now.BeginningOfDay(), now.EndOfDay()
+		from, to = timeNow.BeginningOfDay(), timeNow.EndOfDay()
 	case currentMonthCommand:
-		from, to = now.BeginningOfMonth(), now.EndOfMonth()
+		from, to = timeNow.BeginningOfMonth(), timeNow.EndOfMonth()
 	default:
-
+		t.sendDefaultErr(u.Message.Chat.ID, errors.New("can't detect command"))
+		return
 	}
 
 	chatID := u.Message.Chat.ID
