@@ -1,3 +1,18 @@
+// Copyright © 2019 Volodymyr Kalachevskyi <v.kalachevskyi@gmail.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package usecases is the business logic layer of the application.
 package usecases
 
 import (
@@ -14,14 +29,17 @@ import (
 
 const timeLocation = "Europe/Kiev"
 
+// Logger - represents the application's logger interface
 type Logger interface {
 	Error(args ...interface{})
 }
 
+// TransactionRepo - represents Transaction repository interface
 type TransactionRepo interface {
 	GetTransactions(token string, from time.Time, to time.Time) ([]entities.Transaction, error)
 }
 
+// NewTransaction - builds Transaction report use-case
 func NewTransaction(trRepo TransactionRepo, mapRepo MappingRepo, log Logger, date Date) *Transaction {
 	return &Transaction{
 		apiRepo:     trRepo,
@@ -31,6 +49,7 @@ func NewTransaction(trRepo TransactionRepo, mapRepo MappingRepo, log Logger, dat
 	}
 }
 
+// Transaction - represents Transaction  use-case for processing bank Transactions
 type Transaction struct {
 	apiRepo     TransactionRepo
 	mappingRepo MappingRepo
@@ -38,6 +57,7 @@ type Transaction struct {
 	Date
 }
 
+// GetTransactions - get bank transactions, convert it to app csv report
 func (a *Transaction) GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error) {
 	transactions, err := a.apiRepo.GetTransactions(token, from, to)
 	if err != nil {
@@ -95,6 +115,7 @@ func (a Transaction) Locale() *time.Location {
 	return a.loc
 }
 
+// ParseDate - parse date from string
 func (a *Transaction) ParseDate(period string) (from time.Time, to time.Time, err error) {
 	filter, err := a.getFilter(period)
 	if err != nil {
