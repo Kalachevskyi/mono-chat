@@ -1,3 +1,18 @@
+// Copyright © 2019 Volodymyr Kalachevskyi <v.kalachevskyi@gmail.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package usecases is the business logic layer of the application.
 package usecases
 
 import (
@@ -17,6 +32,7 @@ const csvSuffix = ".csv"
 //timeDurationDay - time duration for days
 const timeDurationDay = 24 * time.Hour
 
+// TelegramRepo - represents Telegram repository interface
 type TelegramRepo interface {
 	GetFile(url string) (io.ReadCloser, error)
 }
@@ -27,6 +43,7 @@ type filter struct {
 	truncate time.Duration
 }
 
+// NewFileReport - builds File report use-case
 func NewFileReport(date Date, mappingRepo MappingRepo, log Logger, telegramRepo TelegramRepo) *FileReport {
 	return &FileReport{
 		date:         date,
@@ -36,6 +53,7 @@ func NewFileReport(date Date, mappingRepo MappingRepo, log Logger, telegramRepo 
 	}
 }
 
+// FileReport - represents File report use-case for processing file report
 type FileReport struct {
 	date        Date
 	mappingRepo MappingRepo
@@ -43,6 +61,7 @@ type FileReport struct {
 	TelegramRepo
 }
 
+// Validate - validate file name by suffix ".csv"
 func (c *FileReport) Validate(name string) error {
 	if !strings.HasSuffix(name, csvSuffix) {
 		return errors.New(`chat can only be processed using the file "csv"`)
@@ -50,6 +69,7 @@ func (c *FileReport) Validate(name string) error {
 	return nil
 }
 
+// Parse - parse MonoBank "csv" report, convert it to application format
 func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reader, error) {
 	lines, err := csv.NewReader(r).ReadAll()
 	if err != nil {

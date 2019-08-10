@@ -1,3 +1,18 @@
+// Copyright © 2019 Volodymyr Kalachevskyi <v.kalachevskyi@gmail.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// Package handlers is an interface adapters of application
 package handlers
 
 import (
@@ -11,22 +26,26 @@ import (
 	"github.com/jinzhu/now"
 )
 
+// ApiUC - represents a use-case interface for processing business logic of "MonoBank" transactions API
 type ApiUC interface {
 	GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error)
 	ParseDate(period string) (from time.Time, to time.Time, err error)
 	Locale() *time.Location
 }
 
+// NewTransaction - builds "NewTransaction" internal handler
 func NewTransaction(tokenUC TokenUC, apiUC ApiUC, botWrapper *BotWrapper) *Transaction {
 	return &Transaction{tokenUC: tokenUC, apiUC: apiUC, BotWrapper: botWrapper}
 }
 
+// Transaction - represents an internal handler for processing "MonoBank" transactions API
 type Transaction struct {
 	tokenUC TokenUC
 	apiUC   ApiUC
 	*BotWrapper
 }
 
+// Handle - process the "MonoBank" transactions API, send the result to the user
 func (t *Transaction) Handle(u tg.Update) {
 	var (
 		from, to time.Time
