@@ -16,8 +16,6 @@
 package handlers
 
 import (
-	"fmt"
-
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
@@ -63,7 +61,6 @@ type Chat struct {
 
 // Handle - routes between internal handlers depending on the type of message
 func (c *Chat) Handle() {
-	fmt.Println()
 	for u := range c.updates {
 		if u.Message == nil { // ignore any non-Message Updates
 			continue

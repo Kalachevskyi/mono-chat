@@ -29,3 +29,8 @@ type Transaction struct {
 	CashbackAmount  int    `json:"cashbackAmount"`
 	Balance         int    `json:"balance"`
 }
+
+// MonoAPIError - represents monobank's error entity
+type MonoAPIError struct {
+	ErrorDescription string `json:"errorDescription"`
+}

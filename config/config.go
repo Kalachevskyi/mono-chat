@@ -26,7 +26,7 @@ type Config struct {
 	Offset      int
 	Timeout     int
 	EncodingLog string // Valid values are "json" and "console",
-	RedisUrl    string // Example localhost:6379
+	RedisURL    string // Example localhost:6379
 }
 
 // Validate - verify app configuration
@@ -39,7 +39,7 @@ func (c *Config) Validate() error {
 		return errors.New(`config parameter "timeout" can't be empty`)
 	}
 
-	if c.RedisUrl == "" {
+	if c.RedisURL == "" {
 		return errors.New(`config parameter "redis_url" can't be empty`)
 	}
 

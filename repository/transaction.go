@@ -59,12 +59,20 @@ func (m *Transaction) GetTransactions(token string, from, to time.Time) ([]entit
 	}
 	defer m.close(resp.Body)
 
-	transactions := make([]entities.Transaction, 0)
-	if err := json.NewDecoder(resp.Body).Decode(&transactions); err != nil {
+	if resp.StatusCode == http.StatusOK {
+		transactions := make([]entities.Transaction, 0)
+		if err := json.NewDecoder(resp.Body).Decode(&transactions); err != nil {
+			return nil, errors.WithStack(err)
+		}
+		return transactions, nil
+	}
+
+	errMono := entities.MonoAPIError{}
+	if err := json.NewDecoder(resp.Body).Decode(&errMono); err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	return transactions, nil
+	return nil, errors.New(errMono.ErrorDescription)
 }
 
 func (m *Transaction) close(c io.Closer) {

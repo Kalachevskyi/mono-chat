@@ -31,9 +31,8 @@ func NewTelegram() *Telegram {
 type Telegram struct{}
 
 func (c *Telegram) GetFile(url string) (io.ReadCloser, error) {
-	resp, err := http.Get(url)
+	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
-
 		return nil, errors.Errorf("can't get file by url: %s", url)
 	}
 

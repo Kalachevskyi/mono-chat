@@ -27,12 +27,12 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
+type shared struct {
 	log         *zap.SugaredLogger
 	redisClient *redis.Client
 	botWrapper  *h.BotWrapper
 	dateUC      uc.Date
-)
+}
 
 //Build - initialize app components
 func Build(conf config.Config) (*h.Chat, error) {
@@ -50,7 +50,7 @@ func Build(conf config.Config) (*h.Chat, error) {
 		return nil, fmt.Errorf("can't get updates: %v", err.Error())
 	}
 
-	rClient, err := NewRedisClient(conf.RedisUrl)
+	rClient, err := NewRedisClient(conf.RedisURL)
 	if err != nil {
 		return nil, err
 	}
@@ -60,54 +60,59 @@ func Build(conf config.Config) (*h.Chat, error) {
 		return nil, fmt.Errorf("can't load logger: err=%v", err)
 	}
 
-	dateUC = uc.Date{}
+	dateUC := uc.Date{}
 	if err := dateUC.Init(); err != nil {
 		return nil, fmt.Errorf("can't compaile regexp: err=%s", err.Error())
 	}
 
-	log = zLog
-	redisClient = rClient
-	botWrapper = h.NewBotWrapper(bot, zLog)
+	botWrapper := h.NewBotWrapper(bot, zLog)
+
+	s := shared{
+		log:         zLog,
+		redisClient: rClient,
+		botWrapper:  botWrapper,
+		dateUC:      dateUC,
+	}
 
 	handlers := map[h.HandlerKey]h.Handler{
-		h.FileReportHandler:   reportHandler(),
-		h.MappingHandler:      mappingHandler(),
-		h.TransactionsHandler: transactionHandler(),
-		h.TokenHandler:        tokenHandler(),
+		h.FileReportHandler:   reportHandler(s),
+		h.MappingHandler:      mappingHandler(s),
+		h.TransactionsHandler: transactionHandler(s),
+		h.TokenHandler:        tokenHandler(s),
 	}
 
 	return h.NewChat(up, handlers, botWrapper), nil
 }
 
-func reportHandler() *h.FileReport {
-	mappingRepo := repository.NewMapping(redisClient)
+func reportHandler(s shared) *h.FileReport {
+	mappingRepo := repository.NewMapping(s.redisClient)
 	tgRepo := repository.NewTelegram()
-	fileReportUC := uc.NewFileReport(dateUC, mappingRepo, log, tgRepo)
-	fileReportHandler := h.NewFileReport(fileReportUC, botWrapper)
+	fileReportUC := uc.NewFileReport(s.dateUC, mappingRepo, s.log, tgRepo)
+	fileReportHandler := h.NewFileReport(fileReportUC, s.botWrapper)
 	return fileReportHandler
 }
 
-func mappingHandler() *h.Mapping {
-	mappingRepo := repository.NewMapping(redisClient)
+func mappingHandler(s shared) *h.Mapping {
+	mappingRepo := repository.NewMapping(s.redisClient)
 	tgRepo := repository.NewTelegram()
 	mappingUC := uc.NewMapping(mappingRepo, tgRepo)
-	mappingHandler := h.NewMapping(mappingUC, botWrapper)
+	mappingHandler := h.NewMapping(mappingUC, s.botWrapper)
 	return mappingHandler
 }
 
-func transactionHandler() *h.Transaction {
-	tokenRepo := repository.NewToken(redisClient)
-	apiRepo := repository.NewTransaction(log)
-	mappingRepo := repository.NewMapping(redisClient)
+func transactionHandler(s shared) *h.Transaction {
+	tokenRepo := repository.NewToken(s.redisClient)
+	apiRepo := repository.NewTransaction(s.log)
+	mappingRepo := repository.NewMapping(s.redisClient)
 	tokenUC := uc.NewToken(tokenRepo)
-	apiUC := uc.NewTransaction(apiRepo, mappingRepo, log, dateUC)
-	transactionHandler := h.NewTransaction(tokenUC, apiUC, botWrapper)
+	apiUC := uc.NewTransaction(apiRepo, mappingRepo, s.log, s.dateUC)
+	transactionHandler := h.NewTransaction(tokenUC, apiUC, s.botWrapper)
 	return transactionHandler
 }
 
-func tokenHandler() *h.Token {
-	tokenRepo := repository.NewToken(redisClient)
+func tokenHandler(s shared) *h.Token {
+	tokenRepo := repository.NewToken(s.redisClient)
 	tokenUC := uc.NewToken(tokenRepo)
-	tokenHandler := h.NewToken(tokenUC, botWrapper)
+	tokenHandler := h.NewToken(tokenUC, s.botWrapper)
 	return tokenHandler
 }

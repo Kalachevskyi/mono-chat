@@ -15,7 +15,7 @@
 // Package usecases is the business logic layer of the application.
 package usecases
 
-//ReportHeader - report header enum
+// ReportHeader - report header enum
 type ReportHeader int
 
 func (r ReportHeader) Str() string { return months[r-1] }
@@ -28,7 +28,7 @@ const (
 	AmountHeader
 )
 
-var months = [...]string{
+var months = [...]string{ //nolint:gochecknoglobals
 	"Date",
 	"Description",
 	"Category",

@@ -26,22 +26,22 @@ import (
 	"github.com/jinzhu/now"
 )
 
-// ApiUC - represents a use-case interface for processing business logic of "MonoBank" transactions API
-type ApiUC interface {
+// APIUC - represents a use-case interface for processing business logic of "MonoBank" transactions API
+type APIUC interface {
 	GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error)
 	ParseDate(period string) (from time.Time, to time.Time, err error)
 	Locale() *time.Location
 }
 
 // NewTransaction - builds "NewTransaction" internal handler
-func NewTransaction(tokenUC TokenUC, apiUC ApiUC, botWrapper *BotWrapper) *Transaction {
+func NewTransaction(tokenUC TokenUC, apiUC APIUC, botWrapper *BotWrapper) *Transaction {
 	return &Transaction{tokenUC: tokenUC, apiUC: apiUC, BotWrapper: botWrapper}
 }
 
 // Transaction - represents an internal handler for processing "MonoBank" transactions API
 type Transaction struct {
 	tokenUC TokenUC
-	apiUC   ApiUC
+	apiUC   APIUC
 	*BotWrapper
 }
 

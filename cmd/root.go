@@ -63,7 +63,7 @@ func (r *RootCMD) Init() *cli.App {
 		cli.StringFlag{
 			Name:        "redis_url",
 			Usage:       `URL to access to redis service"`,
-			Destination: &r.conf.RedisUrl,
+			Destination: &r.conf.RedisURL,
 		},
 	}
 
