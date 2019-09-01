@@ -103,7 +103,7 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 		}
 
 		date, category, bankCategory, description, amount := line[0], line[2], line[2], line[1], line[3]
-		description = strings.Replace(description, "\n", "", -1)
+		description = strings.Replace(description, "\n", " ", -1)
 
 		if filter != nil {
 			dateTime, err := time.Parse(dateTimeReportPattern, date)
