@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Kalachevskyi/mono-chat/entities"
@@ -84,7 +85,7 @@ func (a *Transaction) GetTransactions(token string, chatID int64, from time.Time
 	}
 
 	for _, tr := range transactions {
-		description := tr.Description
+		description := strings.Replace(tr.Description, "\n", "", -1)
 		category := strconv.Itoa(tr.Mcc)
 		bankCategory := strconv.Itoa(tr.Mcc)
 
