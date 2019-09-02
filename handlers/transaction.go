@@ -20,10 +20,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/pkg/errors"
-
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/jinzhu/now"
+	"github.com/pkg/errors"
 )
 
 // ApiUC - represents a use-case interface for processing business logic of "MonoBank" transactions API

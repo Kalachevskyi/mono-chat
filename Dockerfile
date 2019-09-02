@@ -1,4 +1,4 @@
-FROM golang as builder
+FROM stiks/go-lint-dep as builder
 
 # Copy the local package files to the container's workspace.
 ADD . /go/src/github.com/Kalachevskyi/mono-chat
@@ -6,6 +6,7 @@ ADD . /go/src/github.com/Kalachevskyi/mono-chat
 # Changing working directory.
 WORKDIR /go/src/github.com/Kalachevskyi/mono-chat
 
+# Download dependencies
 RUN export GO111MODULE=on && go mod download && go mod vendor
 
 # Building application.

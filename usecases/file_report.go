@@ -29,17 +29,14 @@ import (
 
 const csvSuffix = ".csv"
 
-//timeDurationDay - time duration for days
-const timeDurationDay = 24 * time.Hour
-
 // TelegramRepo - represents Telegram repository interface
 type TelegramRepo interface {
 	GetFile(url string) (io.ReadCloser, error)
 }
 
 type filter struct {
-	start    time.Time
-	end      time.Time
+	from     time.Time
+	to       time.Time
 	truncate time.Duration
 }
 
@@ -135,15 +132,15 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 }
 
 func (c *FileReport) applyFilter(d time.Time, f filter) bool {
-	if d.Equal(f.start) || d.Equal(f.end) {
+	if d.Equal(f.from) || d.Equal(f.to) {
 		return true
 	}
 
-	if d.Before(f.start) {
+	if d.Before(f.from) {
 		return false
 	}
 
-	if d.After(f.end) {
+	if d.After(f.to) {
 		return false
 	}
 
