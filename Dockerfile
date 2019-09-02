@@ -1,4 +1,4 @@
-FROM stiks/go-lint-dep as builder
+FROM golang as builder
 
 # Copy the local package files to the container's workspace.
 ADD . /go/src/github.com/Kalachevskyi/mono-chat
