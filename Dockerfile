@@ -1,4 +1,4 @@
-FROM stiks/go-lint-dep as builder
+FROM golang as builder
 
 # Copy the local package files to the container's workspace.
 ADD . /go/src/github.com/Kalachevskyi/mono-chat
@@ -26,4 +26,4 @@ WORKDIR /root/
 COPY --from=builder /go/src/github.com/Kalachevskyi/mono-chat/mono-chat .
 
 # Run service
-ENTRYPOINT [ "sh", "-c", "./mono-chat --token=$TOKEN --timeout=$TIMEOUT --redis_url=$REDIS_URL" ]
+ENTRYPOINT [ "sh", "-c", "./mono-chat --token=$TOKEN --timeout=$ TIMEOUT --redis_url=$REDIS_URL" ]
