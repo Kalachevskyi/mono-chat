@@ -152,7 +152,7 @@ func TestDate_getFilter(t *testing.T) {
 		},
 		{
 			name: `test-case3: success with date`,
-			args: args{name: "01.08.2019-05.08.2019"},
+			args: args{name: "01.08.2019-06.08.2019"},
 			want: func(loc *time.Location) *filter {
 				from, err := time.ParseInLocation(dateTimePattern, "01.08.2019"+timeFromPattern, loc)
 				Ω(err).To(BeNil(), errNotEqual)
