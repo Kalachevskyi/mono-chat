@@ -3,5 +3,5 @@
 
 steps:
   # Start CI process.
-  - name: 'stiks/go-lint-dep'
-    args: ['make', 'test']
+  - name: 'gcr.io/mono-chat-246322/go-ci'
+    args: ['make', 'ci']
