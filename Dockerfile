@@ -9,9 +9,6 @@ WORKDIR /go/src/github.com/Kalachevskyi/mono-chat
 # Download dependencies
 RUN export GO111MODULE=on && go mod download && go mod vendor
 
-# Start testing
-RUN make test
-
 # Building application.
 RUN go build -o mono-chat main.go
 
