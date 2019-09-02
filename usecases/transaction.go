@@ -27,8 +27,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-const timeLocation = "Europe/Kiev"
-
 // Logger - represents the application's logger interface
 type Logger interface {
 	Error(args ...interface{})
@@ -122,5 +120,5 @@ func (a *Transaction) ParseDate(period string) (from time.Time, to time.Time, er
 		return
 	}
 
-	return filter.start, filter.end, nil
+	return filter.from, filter.to, nil
 }

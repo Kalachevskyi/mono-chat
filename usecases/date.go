@@ -24,6 +24,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+//timeDurationDay - time duration for days
+const timeDurationDay = 24 * time.Hour
+
 //Date patterns
 const (
 	yearMonthPattern      = "01.2006"
@@ -31,13 +34,6 @@ const (
 	dateTimeReportPattern = "02.01.2006 15:04:05"
 	timeFromPattern       = "T00.00"
 	timeToPattern         = "T23.59"
-)
-
-//Regexp patterns
-const (
-	dateShortRegexpPattern = `^\d{2}-\d{2}` //range of date for the current month
-	dateRegexpPattern      = `\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}`
-	dateTimeRegexpPattern  = `\d{2}\.\d{2}\.\d{4}T\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{4}T\d{2}\.\d{2}`
 )
 
 // Date - precompiled regex for dates, time location
@@ -49,26 +45,26 @@ type Date struct {
 }
 
 // Init - compile regex for date, load location
-func (d *Date) Init() error {
-	r, err := regexp.Compile(dateShortRegexpPattern)
+func (d *Date) Init(dateShort, date, dateTime, location string) error {
+	r, err := regexp.Compile(dateShort)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	d.dateShortRegexp = r
 
-	r, err = regexp.Compile(dateRegexpPattern)
+	r, err = regexp.Compile(date)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	d.dateRegexp = r
 
-	r, err = regexp.Compile(dateTimeRegexpPattern)
+	r, err = regexp.Compile(dateTime)
 	if err != nil {
 		return errors.WithStack(err)
 	}
 	d.dateTimeRegexp = r
 
-	loc, err := time.LoadLocation(timeLocation)
+	loc, err := time.LoadLocation(location)
 	if err != nil {
 		return errors.Wrap(err, "can't set time location")
 	}
@@ -116,8 +112,8 @@ func (d *Date) parseTime(fromStr, toStr string, tr time.Duration) (*filter, erro
 	}
 
 	filter := filter{
-		start:    from,
-		end:      to,
+		from:     from,
+		to:       to,
 		truncate: tr,
 	}
 

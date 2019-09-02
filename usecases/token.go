@@ -17,6 +17,8 @@ package usecases
 
 import "fmt"
 
+//go:generate mockgen -destination=./token_mock_test.go -package=usecases_test -source=./token.go
+
 // TokenRepo - represents Token repository interface
 type TokenRepo interface {
 	Set(key, token string) error

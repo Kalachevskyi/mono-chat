@@ -61,7 +61,12 @@ func Build(conf config.Config) (*h.Chat, error) {
 	}
 
 	dateUC = uc.Date{}
-	if err := dateUC.Init(); err != nil {
+	// regexp patterns
+	dateShort := config.DateShortRegexpPattern
+	date := config.DateRegexpPattern
+	dateTime := config.DateTimeRegexpPattern
+	location := config.TimeLocation
+	if err := dateUC.Init(dateShort, date, dateTime, location); err != nil {
 		return nil, fmt.Errorf("can't compaile regexp: err=%s", err.Error())
 	}
 
