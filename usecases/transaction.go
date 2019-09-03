@@ -110,7 +110,8 @@ func (a *Transaction) GetTransactions(token string, chatID int64, from time.Time
 	return buf, nil
 }
 
-func (a Transaction) Locale() *time.Location {
+// Locale - return the transaction locale
+func (a *Transaction) Locale() *time.Location {
 	return a.loc
 }
 

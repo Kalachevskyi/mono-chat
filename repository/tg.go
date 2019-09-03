@@ -30,8 +30,9 @@ func NewTelegram() *Telegram {
 // Telegram - represents the Telegram repository for communication with Telegram api
 type Telegram struct{}
 
+// GetFile -  get the file from Telegram REST API, makes HTTP call to telegram API
 func (c *Telegram) GetFile(url string) (io.ReadCloser, error) {
-	resp, err := http.Get(url)
+	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
 
 		return nil, errors.Errorf("can't get file by url: %s", url)

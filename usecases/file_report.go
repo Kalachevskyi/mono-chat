@@ -29,6 +29,8 @@ import (
 
 const csvSuffix = ".csv"
 
+const errWriteLine = "can't write line: line=%v err=%v"
+
 // TelegramRepo - represents Telegram repository interface
 type TelegramRepo interface {
 	GetFile(url string) (io.ReadCloser, error)
@@ -84,7 +86,7 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 	buf := &bytes.Buffer{}
 	wr := csv.NewWriter(buf)
 	if err := wr.Write(header); err != nil {
-		return nil, errors.Errorf("can't write line: line=%v err=%v", header, err)
+		return nil, errors.Errorf(errWriteLine, header, err)
 	}
 
 	key := fmt.Sprintf("%s%s", strconv.Itoa(int(chatID)), mappingSufix)
@@ -123,8 +125,7 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 
 		record := []string{date, description, category, bankCategory, amount}
 		if err := wr.Write(record); err != nil {
-			msg := "can't write line: line=%v err=%v"
-			return nil, errors.Errorf(msg, record, err)
+			return nil, errors.Errorf(errWriteLine, record, err)
 		}
 	}
 	wr.Flush()
