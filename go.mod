@@ -23,8 +23,8 @@ require (
 	go.uber.org/zap v1.9.1
 	golang.org/x/crypto v0.0.0-20190829043050-9756ffdc2472 // indirect
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297 // indirect
-	golang.org/x/sys v0.0.0-20190830142957-1e83adbbebd0 // indirect
+	golang.org/x/sys v0.0.0-20190903213830-1f305c863dab // indirect
 	golang.org/x/text v0.3.2 // indirect
-	golang.org/x/tools v0.0.0-20190830223141-573d9926052a // indirect
+	golang.org/x/tools v0.0.0-20190903163617-be0da057c5e3 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )

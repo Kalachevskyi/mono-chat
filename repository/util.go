@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package config implements the application configuration
-package config
+// Package repository is an data layer of application
+package repository
 
-//Regexp patterns
-const (
-	DateShortRegexpPattern = `^\d{2}-\d{2}` //range of date for the current month
-	DateRegexpPattern      = `\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}`
-	DateTimeRegexpPattern  = `\d{2}\.\d{2}\.\d{4}T\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{4}T\d{2}\.\d{2}`
-)
+import "io"
 
-// TimeLocation - application location
-const TimeLocation = "Europe/Kiev"
+// Logger - represents the application's logger interface
+type Logger interface {
+	Errorf(template string, args ...interface{})
+}
+
+func closeBody(c io.Closer, log Logger) {
+	if err := c.Close(); err != nil {
+		log.Errorf("%+v", err)
+	}
+}

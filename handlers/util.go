@@ -26,6 +26,7 @@ import (
 // HandlerKey - type for naming handlers
 type HandlerKey int
 
+// Handlers keys
 const (
 	FileReportHandler HandlerKey = 1 + iota
 	MappingHandler

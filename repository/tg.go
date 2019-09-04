@@ -23,19 +23,25 @@ import (
 )
 
 // NewTelegram - builds Telegram repository
-func NewTelegram() *Telegram {
-	return &Telegram{}
+func NewTelegram(log Logger) *Telegram {
+	return &Telegram{
+		log: log,
+	}
 }
 
 // Telegram - represents the Telegram repository for communication with Telegram api
-type Telegram struct{}
+type Telegram struct {
+	log Logger
+}
 
+// GetFile -  get the file from Telegram REST API, makes HTTP call to telegram API
 func (c *Telegram) GetFile(url string) (io.ReadCloser, error) {
-	resp, err := http.Get(url)
+	resp, err := http.Get(url) //nolint:gosec
 	if err != nil {
 
 		return nil, errors.Errorf("can't get file by url: %s", url)
 	}
+	defer closeBody(resp.Body, c.log)
 
 	return resp.Body, nil
 }

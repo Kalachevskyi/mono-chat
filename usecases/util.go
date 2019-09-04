@@ -18,8 +18,10 @@ package usecases
 //ReportHeader - report header enum
 type ReportHeader int
 
+// Str - returns a report header string
 func (r ReportHeader) Str() string { return months[r-1] }
 
+// Headers for csv report
 const (
 	DateHeader ReportHeader = 1 + iota
 	DescriptionHeader
@@ -28,7 +30,7 @@ const (
 	AmountHeader
 )
 
-var months = [...]string{
+var months = [...]string{ //nolint:gochecknoglobals
 	"Date",
 	"Description",
 	"Category",
