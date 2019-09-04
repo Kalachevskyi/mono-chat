@@ -28,6 +28,8 @@ import (
 
 const mappingSufix = "_mapping"
 
+//go:generate mockgen -destination=./mapping_mock_test.go -package=usecases -source=./mapping.go
+
 // MappingRepo - represents Mapping repository interface
 type MappingRepo interface {
 	Set(key string, val map[string]entities.CategoryMapping) error
