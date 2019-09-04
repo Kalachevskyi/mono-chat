@@ -95,7 +95,11 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 		c.log.Error(err)
 	}
 
-	filter, _ := c.date.getFilter(fileName)
+	filter, err := c.date.getFilter(fileName)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, line := range lines {
 		if len(line) != 10 { //10 - default columns in a mono bank template
 			return nil, errors.New("report template does not match, should be 10")

@@ -18,7 +18,6 @@ package repository
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
@@ -27,11 +26,6 @@ import (
 )
 
 const monoDomain = "https://api.monobank.ua"
-
-// Logger - represents the application's logger interface
-type Logger interface {
-	Errorf(template string, args ...interface{})
-}
 
 // NewTransaction - builds Transaction repository
 func NewTransaction(log Logger) *Transaction {
@@ -57,7 +51,7 @@ func (m *Transaction) GetTransactions(token string, from, to time.Time) ([]entit
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	defer m.close(resp.Body)
+	defer closeBody(resp.Body, m.log)
 
 	transactions := make([]entities.Transaction, 0)
 	if err := json.NewDecoder(resp.Body).Decode(&transactions); err != nil {
@@ -65,10 +59,4 @@ func (m *Transaction) GetTransactions(token string, from, to time.Time) ([]entit
 	}
 
 	return transactions, nil
-}
-
-func (m *Transaction) close(c io.Closer) {
-	if err := c.Close(); err != nil {
-		m.log.Errorf("%+v", err)
-	}
 }

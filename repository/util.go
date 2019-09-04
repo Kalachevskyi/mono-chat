@@ -15,33 +15,15 @@
 // Package repository is an data layer of application
 package repository
 
-import (
-	"io"
-	"net/http"
+import "io"
 
-	"github.com/pkg/errors"
-)
-
-// NewTelegram - builds Telegram repository
-func NewTelegram(log Logger) *Telegram {
-	return &Telegram{
-		log: log,
-	}
+// Logger - represents the application's logger interface
+type Logger interface {
+	Errorf(template string, args ...interface{})
 }
 
-// Telegram - represents the Telegram repository for communication with Telegram api
-type Telegram struct {
-	log Logger
-}
-
-// GetFile -  get the file from Telegram REST API, makes HTTP call to telegram API
-func (c *Telegram) GetFile(url string) (io.ReadCloser, error) {
-	resp, err := http.Get(url) //nolint:gosec
-	if err != nil {
-
-		return nil, errors.Errorf("can't get file by url: %s", url)
+func closeBody(c io.Closer, log Logger) {
+	if err := c.Close(); err != nil {
+		log.Errorf("%+v", err)
 	}
-	defer closeBody(resp.Body, c.log)
-
-	return resp.Body, nil
 }

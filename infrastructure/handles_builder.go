@@ -91,7 +91,7 @@ func Build(conf config.Config) (*h.Chat, error) {
 
 func reportHandler(s shared) *h.FileReport {
 	mappingRepo := repository.NewMapping(s.redisClient)
-	tgRepo := repository.NewTelegram()
+	tgRepo := repository.NewTelegram(s.log)
 	fileReportUC := uc.NewFileReport(s.dateUC, mappingRepo, s.log, tgRepo)
 	fileReportHandler := h.NewFileReport(fileReportUC, s.botWrapper)
 	return fileReportHandler
@@ -99,7 +99,7 @@ func reportHandler(s shared) *h.FileReport {
 
 func mappingHandler(s shared) *h.Mapping {
 	mappingRepo := repository.NewMapping(s.redisClient)
-	tgRepo := repository.NewTelegram()
+	tgRepo := repository.NewTelegram(s.log)
 	mappingUC := uc.NewMapping(mappingRepo, tgRepo)
 	mappingHandler := h.NewMapping(mappingUC, s.botWrapper)
 	return mappingHandler
