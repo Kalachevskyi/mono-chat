@@ -30,7 +30,7 @@ const (
 	AmountHeader
 )
 
-var months = [...]string{ //nolint:gochecknoglobals
+var months = [5]string{ //nolint:gochecknoglobals
 	"Date",
 	"Description",
 	"Category",

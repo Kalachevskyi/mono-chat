@@ -28,6 +28,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+//go:generate mockgen -destination=./transaction_mock_test.go -package=usecases -source=./transaction.go
+
 // Logger - represents the application's logger interface
 type Logger interface {
 	Error(args ...interface{})
@@ -37,6 +39,8 @@ type Logger interface {
 type TransactionRepo interface {
 	GetTransactions(token string, from time.Time, to time.Time) ([]entities.Transaction, error)
 }
+
+type categoryMapping map[string]entities.CategoryMapping
 
 // NewTransaction - builds Transaction report use-case
 func NewTransaction(trRepo TransactionRepo, mapRepo MappingRepo, log Logger, date Date) *Transaction {
@@ -63,51 +67,68 @@ func (a *Transaction) GetTransactions(token string, chatID int64, from time.Time
 		return nil, err
 	}
 
-	header := []string{
-		DateHeader.Str(),
-		DescriptionHeader.Str(),
-		CategoryHeader.Str(),
-		BankCategoryHeader.Str(),
-		AmountHeader.Str(),
-	}
-	buf := &bytes.Buffer{}
-	wr := csv.NewWriter(buf)
-	if err := wr.Write(header); err != nil {
-		return nil, errors.Errorf("can't write line: line=%v err=%v", header, err)
-	}
-
-	key := fmt.Sprintf("%s%s", strconv.Itoa(int(chatID)), mappingSufix)
-	catMap, err := a.mappingRepo.Get(key) //Category mapping
-	if err != nil {
-		a.log.Error(err)
+	catMap := a.getCategoryMapping(chatID)
+	records := [][]string{
+		{
+			DateHeader.Str(),
+			DescriptionHeader.Str(),
+			CategoryHeader.Str(),
+			BankCategoryHeader.Str(),
+			AmountHeader.Str(),
+		},
 	}
 
 	for _, tr := range transactions {
 		description := strings.Replace(tr.Description, "\n", " ", -1)
 		category := strconv.Itoa(tr.Mcc)
 		bankCategory := strconv.Itoa(tr.Mcc)
-
-		if catMap != nil {
-			if m, ok := catMap[category+description]; ok {
-				category = m.App
-			} else if m, ok := catMap[category]; ok {
-				category = m.App
-			}
-		}
-
 		amount := fmt.Sprintf("%.2f", float64(tr.Amount)/100)
 		unixTime := time.Unix(int64(tr.Time), 0).In(a.loc)
 		date := unixTime.Format(dateTimeReportPattern)
 
-		record := []string{date, description, category, bankCategory, amount}
-		if err := wr.Write(record); err != nil {
-			msg := "can't write line: line=%v err=%v"
-			return nil, errors.Errorf(msg, record, err)
+		if c, err := a.mapCategory(catMap, category, description); err == nil {
+			category = c
 		}
+		record := []string{date, description, category, bankCategory, amount}
+		records = append(records, record)
 	}
-	wr.Flush()
 
-	return buf, nil
+	buf := &bytes.Buffer{}
+	wr := csv.NewWriter(buf)
+
+	return a.writeRecords(buf, wr, records)
+}
+
+func (a *Transaction) writeRecords(r io.Reader, w *csv.Writer, record [][]string) (io.Reader, error) {
+	if err := w.WriteAll(record); err != nil {
+		return nil, errors.Errorf("can't write lines: lines=%v err=%v", record, err)
+	}
+	return r, nil
+}
+
+func (a Transaction) mapCategory(m categoryMapping, category, description string) (string, error) {
+	if m == nil {
+		return "", errors.New("empty mapping")
+	}
+
+	if m, ok := m[category+description]; ok {
+		return m.App, nil
+	}
+
+	if m, ok := m[category]; ok {
+		return m.App, nil
+	}
+
+	return "", errors.New("can't find mapping")
+}
+
+func (a *Transaction) getCategoryMapping(chatID int64) categoryMapping {
+	key := fmt.Sprintf("%s%s", strconv.Itoa(int(chatID)), mappingSufix)
+	categoryMapping, err := a.mappingRepo.Get(key) //Category mapping
+	if err != nil {
+		a.log.Error(err)
+	}
+	return categoryMapping
 }
 
 // Locale - return the transaction locale

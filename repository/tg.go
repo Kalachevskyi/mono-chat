@@ -41,7 +41,6 @@ func (c *Telegram) GetFile(url string) (io.ReadCloser, error) {
 
 		return nil, errors.Errorf("can't get file by url: %s", url)
 	}
-	defer closeBody(resp.Body, c.log)
 
 	return resp.Body, nil
 }
