@@ -5,11 +5,11 @@
 package usecases_test
 
 import (
-	reflect "reflect"
-	time "time"
+	"reflect"
+	"time"
 
-	entities "github.com/Kalachevskyi/mono-chat/entities"
-	gomock "github.com/golang/mock/gomock"
+	"github.com/Kalachevskyi/mono-chat/app/model"
+	"github.com/golang/mock/gomock"
 )
 
 // MockLogger is a mock of Logger interface
@@ -73,9 +73,9 @@ func (m *MockTransactionRepo) EXPECT() *MockTransactionRepoMockRecorder {
 }
 
 // GetTransactions mocks base method
-func (m *MockTransactionRepo) GetTransactions(token string, from, to time.Time) ([]entities.Transaction, error) {
+func (m *MockTransactionRepo) GetTransactions(token string, from, to time.Time) ([]model.Transaction, error) {
 	ret := m.ctrl.Call(m, "GetTransactions", token, from, to)
-	ret0, _ := ret[0].([]entities.Transaction)
+	ret0, _ := ret[0].([]model.Transaction)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

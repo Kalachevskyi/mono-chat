@@ -24,6 +24,9 @@ import (
 	"github.com/pkg/errors"
 )
 
+// TimeLocation - application location
+const timeLocation = "Europe/Kiev"
+
 //timeDurationDay - time duration for days
 const timeDurationDay = 24 * time.Hour
 
@@ -36,34 +39,44 @@ const (
 	timeToPattern         = "T23.59"
 )
 
-// Date - precompiled regex for dates, time location
-type Date struct {
-	dateShortRegexp *regexp.Regexp
-	dateRegexp      *regexp.Regexp
-	dateTimeRegexp  *regexp.Regexp
-	loc             *time.Location
+// Default regexp patterns for Date
+const (
+	ddRegexp        = `^\d{2}-\d{2}` //range of date for the current month
+	ddmmyyyyRegexp  = `\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}`
+	ddmmyyyytRegexp = `\d{2}\.\d{2}\.\d{4}T\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{4}T\d{2}\.\d{2}`
+)
+
+var (
+	dateShortRegexp = regexp.MustCompile(ddRegexp)        //nolint:gochecknoglobals
+	dateRegexp      = regexp.MustCompile(ddmmyyyyRegexp)  //nolint:gochecknoglobals
+	dateTimeRegexp  = regexp.MustCompile(ddmmyyyytRegexp) //nolint:gochecknoglobals
+)
+
+// DateBuilder - builder for Date
+type DateBuilder struct {
 }
 
-// Init - compile regex for date, load location
-func (d *Date) Init(dateShort, date, dateTime, location string) error {
-	r, err := regexp.Compile(dateShort)
-	if err != nil {
-		return errors.WithStack(err)
+// NewDate - Date type constructor
+// "loc" - can be empty, default parameter "Europe/Kiev"
+func NewDate(loc *time.Location) (*Date, error) {
+	if loc != nil {
+		return &Date{loc: loc}, nil
 	}
-	d.dateShortRegexp = r
 
-	r, err = regexp.Compile(date)
+	loc, err := time.LoadLocation(timeLocation)
 	if err != nil {
-		return errors.WithStack(err)
+		return nil, errors.Wrap(err, "can't set time location")
 	}
-	d.dateRegexp = r
+	return &Date{loc: loc}, nil
+}
 
-	r, err = regexp.Compile(dateTime)
-	if err != nil {
-		return errors.WithStack(err)
-	}
-	d.dateTimeRegexp = r
+// Date - precompiled regex for dates, time location
+type Date struct {
+	loc *time.Location
+}
 
+// init - compile regex for date, load location
+func (d *Date) init(location string) error {
 	loc, err := time.LoadLocation(location)
 	if err != nil {
 		return errors.Wrap(err, "can't set time location")
@@ -73,25 +86,25 @@ func (d *Date) Init(dateShort, date, dateTime, location string) error {
 	return nil
 }
 
-func (d *Date) getFilter(name string) (*filter, error) {
+func (d Date) getFilter(name string) (*filter, error) {
 	name = strings.TrimSuffix(name, csvSuffix)
 	dates := strings.Split(name, "-")
 	if len(dates) != 2 { //2 - must have two date by - separator
 		return nil, errors.New("can't split dates by -")
 	}
 
-	if d.dateShortRegexp.MatchString(name) {
+	if dateShortRegexp.MatchString(name) {
 		yearMonth := time.Now().Format(yearMonthPattern)
 		from := fmt.Sprintf("%s.%s%s", dates[0], yearMonth, timeFromPattern)
 		to := fmt.Sprintf("%s.%s%s", dates[1], yearMonth, timeToPattern)
 		return d.parseTime(from, to, timeDurationDay)
 	}
 
-	if d.dateRegexp.MatchString(name) {
+	if dateRegexp.MatchString(name) {
 		return d.parseTime(dates[0]+timeFromPattern, dates[1]+timeToPattern, timeDurationDay)
 	}
 
-	if d.dateTimeRegexp.MatchString(name) {
+	if dateTimeRegexp.MatchString(name) {
 		return d.parseTime(dates[0], dates[1], time.Minute)
 	}
 
@@ -99,7 +112,7 @@ func (d *Date) getFilter(name string) (*filter, error) {
 }
 
 //parseTime - parse range of time according layout
-func (d *Date) parseTime(fromStr, toStr string, tr time.Duration) (*filter, error) {
+func (d Date) parseTime(fromStr, toStr string, tr time.Duration) (*filter, error) {
 	errMsq := "can't parse time"
 	from, err := time.ParseInLocation(dateTimePattern, fromStr, d.loc)
 	if err != nil {

@@ -22,7 +22,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Kalachevskyi/mono-chat/entities"
+	"github.com/Kalachevskyi/mono-chat/app/model"
 	"github.com/pkg/errors"
 )
 
@@ -32,8 +32,8 @@ const mappingSufix = "_mapping"
 
 // MappingRepo - represents Mapping repository interface
 type MappingRepo interface {
-	Set(key string, val map[string]entities.CategoryMapping) error
-	Get(key string) (map[string]entities.CategoryMapping, error)
+	Set(key string, val map[string]model.CategoryMapping) error
+	Get(key string) (map[string]model.CategoryMapping, error)
 }
 
 // NewMapping - builds mapping use-case
@@ -65,13 +65,13 @@ func (c *Mapping) Parse(chatID int64, r io.Reader) error {
 		return errors.Errorf("can't read file: err=%s", err)
 	}
 
-	mapping := make(map[string]entities.CategoryMapping)
+	mapping := make(map[string]model.CategoryMapping)
 	for _, line := range lines {
 		if len(line) != 3 {
 			return errors.New("mapping should have 3 column")
 		}
 
-		categoryMapping := entities.CategoryMapping{
+		categoryMapping := model.CategoryMapping{
 			Mono:        line[0],
 			Description: line[1],
 			App:         line[2],

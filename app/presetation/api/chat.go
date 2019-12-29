@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package handlers is an interface adapters of application
-package handlers
+// Package api is an interface adapters of application
+package api
 
 import (
-	"fmt"
-
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
@@ -63,7 +61,6 @@ type Chat struct {
 
 // Handle - routes between internal handlers depending on the type of message
 func (c *Chat) Handle() {
-	fmt.Println()
 	for u := range c.updates {
 		if u.Message == nil { // ignore any non-Message Updates
 			continue

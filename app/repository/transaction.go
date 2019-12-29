@@ -21,8 +21,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Kalachevskyi/mono-chat/entities"
 	"github.com/pkg/errors"
+
+	"github.com/Kalachevskyi/mono-chat/app/model"
 )
 
 const monoDomain = "https://api.monobank.ua"
@@ -38,7 +39,7 @@ type Transaction struct {
 }
 
 // GetTransactions - return Transactions from MonoBank
-func (m *Transaction) GetTransactions(token string, from, to time.Time) ([]entities.Transaction, error) {
+func (m *Transaction) GetTransactions(token string, from, to time.Time) ([]model.Transaction, error) {
 	url := fmt.Sprintf("%s/personal/statement/0/%d/%d", monoDomain, from.Unix(), to.Unix())
 	req, err := http.NewRequest(http.MethodGet, url, nil)
 	if err != nil {
@@ -53,7 +54,7 @@ func (m *Transaction) GetTransactions(token string, from, to time.Time) ([]entit
 	}
 	defer closeBody(resp.Body, m.log)
 
-	transactions := make([]entities.Transaction, 0)
+	transactions := make([]model.Transaction, 0)
 	if err := json.NewDecoder(resp.Body).Decode(&transactions); err != nil {
 		return nil, errors.WithStack(err)
 	}

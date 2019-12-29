@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	uc "github.com/Kalachevskyi/mono-chat/usecases"
+	uc "github.com/Kalachevskyi/mono-chat/app/usecases"
+
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 )

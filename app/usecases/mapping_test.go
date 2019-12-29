@@ -7,9 +7,9 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/Kalachevskyi/mono-chat/entities"
+	"github.com/Kalachevskyi/mono-chat/app/model"
+	uc "github.com/Kalachevskyi/mono-chat/app/usecases"
 
-	uc "github.com/Kalachevskyi/mono-chat/usecases"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
 )
@@ -69,7 +69,7 @@ func TestMapping_Parse(t *testing.T) {
 			name: `test-case3: success`,
 			fields: fields{
 				mappingRepo: func() uc.MappingRepo {
-					mapping := map[string]entities.CategoryMapping{
+					mapping := map[string]model.CategoryMapping{
 						"4111": {
 							Mono: "4111",
 							App:  "Transport",
@@ -99,12 +99,7 @@ func TestMapping_Parse(t *testing.T) {
 		mappingRepo := tt.fields.mappingRepo()
 		m := uc.NewMapping(mappingRepo, nil)
 		err := m.Parse(tt.args.chatID, tt.args.r())
-		if tt.wantErr {
-			Ω(err).NotTo(BeNil(), errNotEqual)
-			continue
-		} else {
-			Ω(err).To(BeNil(), errNotEqual)
-		}
+		Ω(err != nil).To(Equal(tt.wantErr), errNotEqual)
 	}
 }
 

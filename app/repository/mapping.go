@@ -18,7 +18,7 @@ package repository
 import (
 	"encoding/json"
 
-	"github.com/Kalachevskyi/mono-chat/entities"
+	"github.com/Kalachevskyi/mono-chat/app/model"
 	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
 )
@@ -34,7 +34,7 @@ type Mapping struct {
 }
 
 // Set - save category mapping for chat key in redis
-func (t *Mapping) Set(key string, val map[string]entities.CategoryMapping) error {
+func (t *Mapping) Set(key string, val map[string]model.CategoryMapping) error {
 	mapping, err := json.Marshal(val)
 	if err != nil {
 		return errors.WithStack(err)
@@ -47,13 +47,13 @@ func (t *Mapping) Set(key string, val map[string]entities.CategoryMapping) error
 }
 
 // Get - return category mapping for chat key from redis
-func (t *Mapping) Get(key string) (map[string]entities.CategoryMapping, error) {
+func (t *Mapping) Get(key string) (map[string]model.CategoryMapping, error) {
 	val, err := t.redisClient.Get(key).Result()
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
-	var mapping map[string]entities.CategoryMapping
+	var mapping map[string]model.CategoryMapping
 	if err := json.Unmarshal([]byte(val), &mapping); err != nil {
 		return nil, errors.WithStack(err)
 	}
