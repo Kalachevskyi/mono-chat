@@ -12,26 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package infrastructure is an application layer for initializing app components
-package infrastructure
+// Package framework is an application layer for initializing app components
+package framework
 
 import (
 	"fmt"
+	"sync"
 
-	"github.com/go-redis/redis"
+	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-// NewRedisClient - initialize the instance of redis client
-func NewRedisClient(url string) (*redis.Client, error) {
-	client := redis.NewClient(&redis.Options{
-		Addr:     url,
-		Password: "", // no password set
-		DB:       0,  // use default DB
+var (
+	tgBot  *tg.BotAPI //nolint:gochecknoglobals
+	tgOnce sync.Once  //nolint:gochecknoglobals
+)
+
+// GetTGBot - initialize the instance of Telegram client
+func GetTGBot(token string) (*tg.BotAPI, error) {
+	var err error
+	tgOnce.Do(func() {
+		tgBot, err = tg.NewBotAPI(token)
+		if err != nil {
+			err = fmt.Errorf("can't initialize Telegram client: err=%s", err.Error())
+			return
+		}
 	})
 
-	if _, err := client.Ping().Result(); err != nil {
-		return nil, fmt.Errorf("can't initialize Redis client: err=%s", err.Error())
-	}
-
-	return client, nil
+	return tgBot, err
 }

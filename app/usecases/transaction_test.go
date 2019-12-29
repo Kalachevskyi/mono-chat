@@ -9,14 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Kalachevskyi/mono-chat/config"
-	"github.com/pkg/errors"
+	"github.com/Kalachevskyi/mono-chat/app/model"
+	uc "github.com/Kalachevskyi/mono-chat/app/usecases"
 
-	"github.com/Kalachevskyi/mono-chat/entities"
-
-	uc "github.com/Kalachevskyi/mono-chat/usecases"
 	"github.com/golang/mock/gomock"
 	. "github.com/onsi/gomega"
+	"github.com/pkg/errors"
 )
 
 func TestNewTransaction(t *testing.T) {
@@ -29,15 +27,7 @@ func TestNewTransaction(t *testing.T) {
 func TestTransaction_GetTransactions(t *testing.T) {
 	RegisterTestingT(t)
 	mockCtrl := gomock.NewController(t)
-
-	dateShort := config.DateShortRegexpPattern
-	dateFull := config.DateRegexpPattern
-	dateTime := config.DateTimeRegexpPattern
-	location := config.TimeLocation
-	date := uc.Date{}
-	if err := date.Init(dateShort, dateFull, dateTime, location); err != nil {
-		Ω(err).To(BeNil(), errNotEqual)
-	}
+	date, _ := uc.NewDate(nil)
 
 	type args struct {
 		token  string
@@ -80,7 +70,7 @@ func TestTransaction_GetTransactions(t *testing.T) {
 			name: `test-case1: success execution`,
 			fields: fields{
 				apiRepo: func(a args) uc.TransactionRepo {
-					transactions := []entities.Transaction{
+					transactions := []model.Transaction{
 						{
 							ID:          "ZuHWzqkKGVo=",
 							Mcc:         7997,
@@ -95,7 +85,7 @@ func TestTransaction_GetTransactions(t *testing.T) {
 				},
 				mappingRepo: func(a args) uc.MappingRepo {
 					key := fmt.Sprintf("%s%s", strconv.Itoa(int(a.chatID)), "_mapping")
-					catMap := map[string]entities.CategoryMapping{"7997": {}}
+					catMap := map[string]model.CategoryMapping{"7997": {}}
 					repo := NewMockMappingRepo(mockCtrl)
 					repo.EXPECT().Get(key).Return(catMap, nil).Times(1)
 					return repo
@@ -133,7 +123,7 @@ func TestTransaction_GetTransactions(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tr := uc.NewTransaction(tt.fields.apiRepo(tt.args), tt.fields.mappingRepo(tt.args), tt.fields.log(), date)
+		tr := uc.NewTransaction(tt.fields.apiRepo(tt.args), tt.fields.mappingRepo(tt.args), tt.fields.log(), *date)
 		got, err := tr.GetTransactions(tt.args.token, tt.args.chatID, tt.args.from, tt.args.to)
 		if tt.wantErr {
 			Ω(err).NotTo(BeNil(), errNotEqual)

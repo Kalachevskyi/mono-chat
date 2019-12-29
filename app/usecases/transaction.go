@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Kalachevskyi/mono-chat/entities"
+	"github.com/Kalachevskyi/mono-chat/app/model"
 	"github.com/pkg/errors"
 )
 
@@ -37,10 +37,10 @@ type Logger interface {
 
 // TransactionRepo - represents Transaction repository interface
 type TransactionRepo interface {
-	GetTransactions(token string, from time.Time, to time.Time) ([]entities.Transaction, error)
+	GetTransactions(token string, from time.Time, to time.Time) ([]model.Transaction, error)
 }
 
-type categoryMapping map[string]entities.CategoryMapping
+type categoryMapping map[string]model.CategoryMapping
 
 // NewTransaction - builds Transaction report use-case
 func NewTransaction(trRepo TransactionRepo, mapRepo MappingRepo, log Logger, date Date) *Transaction {
@@ -131,7 +131,7 @@ func (a *Transaction) getCategoryMapping(chatID int64) categoryMapping {
 	return categoryMapping
 }
 
-// Locale - return the transaction locale
+// Locale - return the transaction localeapi/chat.go:89
 func (a *Transaction) Locale() *time.Location {
 	return a.loc
 }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package entities is an implementation of core application objects
-package entities
+// Package model is an implementation of core application objects
+package model
 
 // Transaction - represents monobank's transaction entity
 type Transaction struct {

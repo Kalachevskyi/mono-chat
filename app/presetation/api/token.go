@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package handlers is an interface adapters of application
-package handlers
+// Package api is an interface adapters of application
+package api
 
 import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"

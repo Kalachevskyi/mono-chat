@@ -5,10 +5,10 @@
 package usecases_test
 
 import (
-	reflect "reflect"
+	"reflect"
 
-	entities "github.com/Kalachevskyi/mono-chat/entities"
-	gomock "github.com/golang/mock/gomock"
+	"github.com/Kalachevskyi/mono-chat/app/model"
+	"github.com/golang/mock/gomock"
 )
 
 // MockMappingRepo is a mock of MappingRepo interface
@@ -35,7 +35,7 @@ func (m *MockMappingRepo) EXPECT() *MockMappingRepoMockRecorder {
 }
 
 // Set mocks base method
-func (m *MockMappingRepo) Set(key string, val map[string]entities.CategoryMapping) error {
+func (m *MockMappingRepo) Set(key string, val map[string]model.CategoryMapping) error {
 	ret := m.ctrl.Call(m, "Set", key, val)
 	ret0, _ := ret[0].(error)
 	return ret0
@@ -47,9 +47,9 @@ func (mr *MockMappingRepoMockRecorder) Set(key, val interface{}) *gomock.Call {
 }
 
 // Get mocks base method
-func (m *MockMappingRepo) Get(key string) (map[string]entities.CategoryMapping, error) {
+func (m *MockMappingRepo) Get(key string) (map[string]model.CategoryMapping, error) {
 	ret := m.ctrl.Call(m, "Get", key)
-	ret0, _ := ret[0].(map[string]entities.CategoryMapping)
+	ret0, _ := ret[0].(map[string]model.CategoryMapping)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

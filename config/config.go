@@ -21,8 +21,8 @@ import (
 
 // Config - app configuration
 type Config struct {
-	Token       string
-	Debug       bool
+	Token       string // Telegram token
+	Debug       bool   // Debug mod
 	Offset      int
 	Timeout     int
 	EncodingLog string // Valid values are "json" and "console",

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package handlers is an interface adapters of application
-package handlers
+// Package api is an interface adapters of application
+package api
 
 import (
 	"fmt"
@@ -25,22 +25,22 @@ import (
 	"github.com/pkg/errors"
 )
 
-// APIUC - represents a use-case interface for processing business logic of "MonoBank" transactions API
-type APIUC interface {
+// TransactionUC - represents a use-case interface for processing business logic of "MonoBank" transactions API
+type TransactionUC interface {
 	GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error)
 	ParseDate(period string) (from time.Time, to time.Time, err error)
 	Locale() *time.Location
 }
 
 // NewTransaction - builds "NewTransaction" internal handler
-func NewTransaction(tokenUC TokenUC, apiUC APIUC, botWrapper *BotWrapper) *Transaction {
-	return &Transaction{tokenUC: tokenUC, apiUC: apiUC, BotWrapper: botWrapper}
+func NewTransaction(tokenUC TokenUC, apiUC TransactionUC, botWrapper *BotWrapper) *Transaction {
+	return &Transaction{tokenUC: tokenUC, TransactionUC: apiUC, BotWrapper: botWrapper}
 }
 
 // Transaction - represents an internal handler for processing "MonoBank" transactions API
 type Transaction struct {
-	tokenUC TokenUC
-	apiUC   APIUC
+	tokenUC       TokenUC
+	TransactionUC TransactionUC
 	*BotWrapper
 }
 
@@ -48,11 +48,11 @@ type Transaction struct {
 func (t *Transaction) Handle(u tg.Update) {
 	var (
 		from, to time.Time
-		timeNow  = now.New(time.Now().In(t.apiUC.Locale()))
+		timeNow  = now.New(time.Now().In(t.TransactionUC.Locale()))
 	)
 	switch u.Message.Command() {
 	case getCommand:
-		fromTime, toTime, err := t.apiUC.ParseDate(u.Message.CommandArguments())
+		fromTime, toTime, err := t.TransactionUC.ParseDate(u.Message.CommandArguments())
 		if err != nil {
 			t.sendDefaultErr(u.Message.Chat.ID, err)
 			return
@@ -74,7 +74,7 @@ func (t *Transaction) Handle(u tg.Update) {
 		return
 	}
 
-	fileResp, err := t.apiUC.GetTransactions(token, chatID, from, to)
+	fileResp, err := t.TransactionUC.GetTransactions(token, chatID, from, to)
 	if err != nil {
 		t.sendDefaultErr(u.Message.Chat.ID, err)
 		return

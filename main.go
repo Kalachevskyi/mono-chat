@@ -19,7 +19,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/Kalachevskyi/mono-chat/cmd"
+	"github.com/Kalachevskyi/mono-chat/app/presetation/cmd"
 )
 
 // Execute adds all child commands to the root command and sets flags appropriately.

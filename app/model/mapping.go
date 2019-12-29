@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package entities is an implementation of core application objects
-package entities
+// Package model is an implementation of core application objects
+package model
 
 // CategoryMapping - represents monobank's and application's category mapping
 type CategoryMapping struct {
