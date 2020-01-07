@@ -13,7 +13,7 @@
 // limitations under the License.
 
 // Package repository is an data layer of application
-package repository
+package telegram
 
 import (
 	"encoding/json"

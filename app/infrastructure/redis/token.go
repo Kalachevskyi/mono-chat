@@ -13,34 +13,36 @@
 // limitations under the License.
 
 // Package repository is an data layer of application
-package repository
+package redis
 
 import (
-	"io"
-	"net/http"
-
+	"github.com/go-redis/redis"
 	"github.com/pkg/errors"
 )
 
-// NewTelegram - builds Telegram repository
-func NewTelegram(log Logger) *Telegram {
-	return &Telegram{
-		log: log,
+// NewToken - builds token repository
+func NewToken(redisClient *redis.Client) *Token {
+	return &Token{redisClient: redisClient}
+}
+
+// Token - represents the Token repository to interact with the token
+type Token struct {
+	redisClient *redis.Client
+}
+
+// Set - save the chat session token in redis
+func (t *Token) Set(key, token string) error {
+	if err := t.redisClient.Set(key, token, 0).Err(); err != nil {
+		return errors.WithStack(err)
 	}
+	return nil
 }
 
-// Telegram - represents the Telegram repository for communication with Telegram api
-type Telegram struct {
-	log Logger
-}
-
-// GetFile -  get the file from Telegram REST API, makes HTTP call to telegram API
-func (c *Telegram) GetFile(url string) (io.ReadCloser, error) {
-	resp, err := http.Get(url) //nolint
+// Get - return chat session token from redis
+func (t *Token) Get(key string) (string, error) {
+	val, err := t.redisClient.Get(key).Result()
 	if err != nil {
-
-		return nil, errors.Errorf("can't get file by url: %s", url)
+		return "", errors.WithStack(err)
 	}
-
-	return resp.Body, nil
+	return val, nil
 }

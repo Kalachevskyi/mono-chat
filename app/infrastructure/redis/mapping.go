@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package repository is an data layer of application
-package repository
+// Package infrastructure is an data layer of application
+package redis
 
 import (
 	"encoding/json"

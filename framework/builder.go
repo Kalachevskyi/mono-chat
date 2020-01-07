@@ -20,8 +20,9 @@ import (
 
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 
+	"github.com/Kalachevskyi/mono-chat/app/infrastructure/redis"
+	"github.com/Kalachevskyi/mono-chat/app/infrastructure/telegram"
 	h "github.com/Kalachevskyi/mono-chat/app/presetation/api"
-	repo "github.com/Kalachevskyi/mono-chat/app/repository"
 	uc "github.com/Kalachevskyi/mono-chat/app/usecases"
 	"github.com/Kalachevskyi/mono-chat/config"
 )
@@ -103,8 +104,8 @@ func reportHandler(cnf config.Config) (*h.FileReport, error) {
 		return nil, err
 	}
 
-	mappingRepo := repo.NewMapping(rClient)
-	tgRepo := repo.NewTelegram(log)
+	mappingRepo := redis.NewMapping(rClient)
+	tgRepo := telegram.NewTelegram(log)
 	fileReportUC := uc.NewFileReport(*dateUC, mappingRepo, log, tgRepo)
 	fileReportHandler := h.NewFileReport(fileReportUC, h.NewBotWrapper(tgBot, log))
 	return fileReportHandler, nil
@@ -126,8 +127,8 @@ func mappingHandler(cnf config.Config) (*h.Mapping, error) {
 		return nil, err
 	}
 
-	mappingRepo := repo.NewMapping(rClient)
-	tgRepo := repo.NewTelegram(log)
+	mappingRepo := redis.NewMapping(rClient)
+	tgRepo := telegram.NewTelegram(log)
 	mappingUC := uc.NewMapping(mappingRepo, tgRepo)
 	mappingHandler := h.NewMapping(mappingUC, h.NewBotWrapper(tgBot, log))
 	return mappingHandler, nil
@@ -154,9 +155,9 @@ func transactionHandler(cnf config.Config) (*h.Transaction, error) {
 		return nil, err
 	}
 
-	tokenRepo := repo.NewToken(rClient)
-	apiRepo := repo.NewTransaction(log)
-	mappingRepo := repo.NewMapping(rClient)
+	tokenRepo := redis.NewToken(rClient)
+	apiRepo := telegram.NewTransaction(log)
+	mappingRepo := redis.NewMapping(rClient)
 	tokenUC := uc.NewToken(tokenRepo)
 	apiUC := uc.NewTransaction(apiRepo, mappingRepo, log, *dateUC)
 	transactionHandler := h.NewTransaction(tokenUC, apiUC, h.NewBotWrapper(tgBot, log))
@@ -179,7 +180,7 @@ func tokenHandler(cnf config.Config) (*h.Token, error) {
 		return nil, err
 	}
 
-	tokenRepo := repo.NewToken(rClient)
+	tokenRepo := redis.NewToken(rClient)
 	tokenUC := uc.NewToken(tokenRepo)
 	tokenHandler := h.NewToken(tokenUC, h.NewBotWrapper(tgBot, log))
 	return tokenHandler, nil

@@ -41,7 +41,7 @@ const (
 
 // Default regexp patterns for Date
 const (
-	ddRegexp        = `^\d{2}-\d{2}` //range of date for the current month
+	ddRegexp        = `^\d{1,2}-\d{1,2}` //range of date for the current month
 	ddmmyyyyRegexp  = `\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}`
 	ddmmyyyytRegexp = `\d{2}\.\d{2}\.\d{4}T\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{4}T\d{2}\.\d{2}`
 )
@@ -51,10 +51,6 @@ var (
 	dateRegexp      = regexp.MustCompile(ddmmyyyyRegexp)  //nolint:gochecknoglobals
 	dateTimeRegexp  = regexp.MustCompile(ddmmyyyytRegexp) //nolint:gochecknoglobals
 )
-
-// DateBuilder - builder for Date
-type DateBuilder struct {
-}
 
 // NewDate - Date type constructor
 // "loc" - can be empty, default parameter "Europe/Kiev"
@@ -75,17 +71,6 @@ type Date struct {
 	loc *time.Location
 }
 
-// init - compile regex for date, load location
-func (d *Date) init(location string) error {
-	loc, err := time.LoadLocation(location)
-	if err != nil {
-		return errors.Wrap(err, "can't set time location")
-	}
-	d.loc = loc
-
-	return nil
-}
-
 func (d Date) getFilter(name string) (*filter, error) {
 	name = strings.TrimSuffix(name, csvSuffix)
 	dates := strings.Split(name, "-")
@@ -95,8 +80,16 @@ func (d Date) getFilter(name string) (*filter, error) {
 
 	if dateShortRegexp.MatchString(name) {
 		yearMonth := time.Now().Format(yearMonthPattern)
-		from := fmt.Sprintf("%s.%s%s", dates[0], yearMonth, timeFromPattern)
-		to := fmt.Sprintf("%s.%s%s", dates[1], yearMonth, timeToPattern)
+		fromRaw := dates[0]
+		if len(fromRaw) == 1 {
+			fromRaw = "0" + fromRaw
+		}
+		toRaw := dates[1]
+		if len(toRaw) == 1 {
+			toRaw = "0" + toRaw
+		}
+		from := fmt.Sprintf("%s.%s%s", fromRaw, yearMonth, timeFromPattern)
+		to := fmt.Sprintf("%s.%s%s", toRaw, yearMonth, timeToPattern)
 		return d.parseTime(from, to, timeDurationDay)
 	}
 

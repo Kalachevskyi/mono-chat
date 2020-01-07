@@ -52,12 +52,12 @@ func (t *Transaction) Handle(u tg.Update) {
 	)
 	switch u.Message.Command() {
 	case getCommand:
-		fromTime, toTime, err := t.TransactionUC.ParseDate(u.Message.CommandArguments())
+		var err error
+		from, to, err = t.TransactionUC.ParseDate(u.Message.CommandArguments())
 		if err != nil {
 			t.sendDefaultErr(u.Message.Chat.ID, err)
 			return
 		}
-		from, to = fromTime, toTime
 	case todayCommand:
 		from, to = timeNow.BeginningOfDay(), timeNow.EndOfDay()
 	case currentMonthCommand:
