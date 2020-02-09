@@ -5,11 +5,11 @@
 package usecases_test
 
 import (
-	"reflect"
-	"time"
+	reflect "reflect"
+	time "time"
 
-	"github.com/Kalachevskyi/mono-chat/app/model"
-	"github.com/golang/mock/gomock"
+	model "github.com/Kalachevskyi/mono-chat/app/model"
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockLogger is a mock of Logger interface
@@ -49,38 +49,38 @@ func (mr *MockLoggerMockRecorder) Error(args ...interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Error", reflect.TypeOf((*MockLogger)(nil).Error), args...)
 }
 
-// MockTransactionRepo is a mock of TransactionRepo interface
-type MockTransactionRepo struct {
+// MockMonoRepo is a mock of MonoRepo interface
+type MockMonoRepo struct {
 	ctrl     *gomock.Controller
-	recorder *MockTransactionRepoMockRecorder
+	recorder *MockMonoRepoMockRecorder
 }
 
-// MockTransactionRepoMockRecorder is the mock recorder for MockTransactionRepo
-type MockTransactionRepoMockRecorder struct {
-	mock *MockTransactionRepo
+// MockMonoRepoMockRecorder is the mock recorder for MockMonoRepo
+type MockMonoRepoMockRecorder struct {
+	mock *MockMonoRepo
 }
 
-// NewMockTransactionRepo creates a new mock instance
-func NewMockTransactionRepo(ctrl *gomock.Controller) *MockTransactionRepo {
-	mock := &MockTransactionRepo{ctrl: ctrl}
-	mock.recorder = &MockTransactionRepoMockRecorder{mock}
+// NewMockMonoRepo creates a new mock instance
+func NewMockMonoRepo(ctrl *gomock.Controller) *MockMonoRepo {
+	mock := &MockMonoRepo{ctrl: ctrl}
+	mock.recorder = &MockMonoRepoMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use
-func (m *MockTransactionRepo) EXPECT() *MockTransactionRepoMockRecorder {
+func (m *MockMonoRepo) EXPECT() *MockMonoRepoMockRecorder {
 	return m.recorder
 }
 
 // GetTransactions mocks base method
-func (m *MockTransactionRepo) GetTransactions(token string, from, to time.Time) ([]model.Transaction, error) {
-	ret := m.ctrl.Call(m, "GetTransactions", token, from, to)
+func (m *MockMonoRepo) GetTransactions(token, account string, from, to time.Time) ([]model.Transaction, error) {
+	ret := m.ctrl.Call(m, "GetTransactions", token, account, from, to)
 	ret0, _ := ret[0].([]model.Transaction)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetTransactions indicates an expected call of GetTransactions
-func (mr *MockTransactionRepoMockRecorder) GetTransactions(token, from, to interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactions", reflect.TypeOf((*MockTransactionRepo)(nil).GetTransactions), token, from, to)
+func (mr *MockMonoRepoMockRecorder) GetTransactions(token, account, from, to interface{}) *gomock.Call {
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTransactions", reflect.TypeOf((*MockMonoRepo)(nil).GetTransactions), token, account, from, to)
 }

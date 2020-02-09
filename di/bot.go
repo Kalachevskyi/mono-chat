@@ -12,37 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package framework is an application layer for initializing app components
-package framework
+// Package di is an application layer for initializing app components
+package di
 
 import (
 	"fmt"
 	"sync"
 
-	"github.com/go-redis/redis"
+	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 var (
-	redisClient *redis.Client //nolint:gochecknoglobals
-	redisOnce   sync.Once     //nolint:gochecknoglobals
+	tgBot  *tg.BotAPI //nolint:gochecknoglobals
+	tgOnce sync.Once  //nolint:gochecknoglobals
 )
 
-// GetRedisClient - initialize the instance of redis client
-func GetRedisClient(url string) (*redis.Client, error) {
+// TGBot - initialize the instance of Telegram client
+func TGBot(token string) (*tg.BotAPI, error) {
 	var err error
-	redisOnce.Do(func() {
-		client := redis.NewClient(&redis.Options{
-			Addr:     url,
-			Password: "", // no password set
-			DB:       0,  // use default DB
-		})
 
-		if _, err = client.Ping().Result(); err != nil {
-			err = fmt.Errorf("can't initialize Redis client: err=%s", err.Error())
+	tgOnce.Do(func() {
+		tgBot, err = tg.NewBotAPI(token)
+		if err != nil {
+			err = fmt.Errorf("can't initialize Telegram client: err=%s", err.Error())
 			return
 		}
-		redisClient = client
 	})
 
-	return redisClient, err
+	return tgBot, err
 }

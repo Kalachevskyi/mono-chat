@@ -30,13 +30,14 @@ func TestTransaction_GetTransactions(t *testing.T) {
 	date, _ := uc.NewDate(nil)
 
 	type args struct {
-		token  string
-		chatID int64
-		from   time.Time
-		to     time.Time
+		token   string
+		account string
+		chatID  int64
+		from    time.Time
+		to      time.Time
 	}
 	type fields struct {
-		apiRepo     func(args) uc.TransactionRepo
+		apiRepo     func(args) uc.MonoRepo
 		mappingRepo func(args) uc.MappingRepo
 		log         func() uc.Logger
 		Date        uc.Date
@@ -52,24 +53,25 @@ func TestTransaction_GetTransactions(t *testing.T) {
 		{
 			name: `test-case1: error from the repo GetTransactions`,
 			fields: fields{
-				apiRepo: func(a args) uc.TransactionRepo {
-					repo := NewMockTransactionRepo(mockCtrl)
+				apiRepo: func(a args) uc.MonoRepo {
+					repo := NewMockMonoRepo(mockCtrl)
 					err := errors.New("some error")
-					repo.EXPECT().GetTransactions(a.token, a.from, a.to).Return(nil, err).Times(1)
+					repo.EXPECT().GetTransactions(a.token, a.account, a.from, a.to).Return(nil, err).Times(1)
 					return repo
 				},
 				mappingRepo: func(a args) uc.MappingRepo { return nil },
 				log:         func() uc.Logger { return nil },
 			},
 			args: args{
-				token: "some_token",
+				token:   "some_token",
+				account: "some_account",
 			},
 			wantErr: true,
 		},
 		{
 			name: `test-case1: success execution`,
 			fields: fields{
-				apiRepo: func(a args) uc.TransactionRepo {
+				apiRepo: func(a args) uc.MonoRepo {
 					transactions := []model.Transaction{
 						{
 							ID:          "ZuHWzqkKGVo=",
@@ -79,8 +81,8 @@ func TestTransaction_GetTransactions(t *testing.T) {
 							Description: "Покупка щастя",
 						},
 					}
-					repo := NewMockTransactionRepo(mockCtrl)
-					repo.EXPECT().GetTransactions(a.token, a.from, a.to).Return(transactions, nil).Times(1)
+					repo := NewMockMonoRepo(mockCtrl)
+					repo.EXPECT().GetTransactions(a.token, a.account, a.from, a.to).Return(transactions, nil).Times(1)
 					return repo
 				},
 				mappingRepo: func(a args) uc.MappingRepo {
@@ -93,7 +95,8 @@ func TestTransaction_GetTransactions(t *testing.T) {
 				log: func() uc.Logger { return nil },
 			},
 			args: args{
-				token: "some_token",
+				token:   "some_token",
+				account: "some_account",
 			},
 			want: func() io.Reader {
 				records := [][]string{
@@ -124,7 +127,7 @@ func TestTransaction_GetTransactions(t *testing.T) {
 	}
 	for _, tt := range tests {
 		tr := uc.NewTransaction(tt.fields.apiRepo(tt.args), tt.fields.mappingRepo(tt.args), tt.fields.log(), *date)
-		got, err := tr.GetTransactions(tt.args.token, tt.args.chatID, tt.args.from, tt.args.to)
+		got, err := tr.GetTransactions(tt.args.token, tt.args.account, tt.args.chatID, tt.args.from, tt.args.to)
 		if tt.wantErr {
 			Ω(err).NotTo(BeNil(), errNotEqual)
 			continue

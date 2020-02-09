@@ -12,16 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package framework is an application layer for initializing app components
-package framework
+// Package di is an application layer for initializing app components
+package di
 
 import (
 	"fmt"
 
+	"github.com/Kalachevskyi/mono-chat/app/infrastructure/mono"
+
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 
+	"github.com/Kalachevskyi/mono-chat/app/infrastructure/redis"
+	"github.com/Kalachevskyi/mono-chat/app/infrastructure/telegram"
 	h "github.com/Kalachevskyi/mono-chat/app/presetation/api"
-	repo "github.com/Kalachevskyi/mono-chat/app/repository"
 	uc "github.com/Kalachevskyi/mono-chat/app/usecases"
 	"github.com/Kalachevskyi/mono-chat/config"
 )
@@ -62,19 +65,31 @@ func Build(cnf config.Config) (*h.Chat, error) {
 		return nil, err
 	}
 
+	clientInfo, err := clientInfoHandler(cnf)
+	if err != nil {
+		return nil, err
+	}
+
+	accountHandler, err := accountHandler(cnf)
+	if err != nil {
+		return nil, err
+	}
+
 	handlers := map[h.HandlerKey]h.Handler{
 		h.FileReportHandler:   reportHandler,
 		h.MappingHandler:      mappingHandler,
 		h.TransactionsHandler: transactionHandler,
 		h.TokenHandler:        tokenHandler,
+		h.ClientInfoHandler:   clientInfo,
+		h.AccountHandler:      accountHandler,
 	}
 
-	log, err := GetLogger(cnf.Debug, cnf.EncodingLog)
+	log, err := Logger(cnf.Debug, cnf.EncodingLog)
 	if err != nil {
 		return nil, err
 	}
 
-	tgBot, err := GetTGBot(cnf.Token)
+	tgBot, err := TGBot(cnf.Token)
 	if err != nil {
 		return nil, err
 	}
@@ -83,12 +98,12 @@ func Build(cnf config.Config) (*h.Chat, error) {
 }
 
 func reportHandler(cnf config.Config) (*h.FileReport, error) {
-	log, err := GetLogger(cnf.Debug, cnf.EncodingLog)
+	log, err := Logger(cnf.Debug, cnf.EncodingLog)
 	if err != nil {
 		return nil, err
 	}
 
-	rClient, err := GetRedisClient(cnf.RedisURL)
+	rClient, err := RedisClient(cnf.RedisURL)
 	if err != nil {
 		return nil, err
 	}
@@ -98,48 +113,48 @@ func reportHandler(cnf config.Config) (*h.FileReport, error) {
 		return nil, err
 	}
 
-	tgBot, err := GetTGBot(cnf.Token)
+	tgBot, err := TGBot(cnf.Token)
 	if err != nil {
 		return nil, err
 	}
 
-	mappingRepo := repo.NewMapping(rClient)
-	tgRepo := repo.NewTelegram(log)
+	mappingRepo := redis.NewMapping(rClient)
+	tgRepo := telegram.NewTelegram(log)
 	fileReportUC := uc.NewFileReport(*dateUC, mappingRepo, log, tgRepo)
 	fileReportHandler := h.NewFileReport(fileReportUC, h.NewBotWrapper(tgBot, log))
 	return fileReportHandler, nil
 }
 
 func mappingHandler(cnf config.Config) (*h.Mapping, error) {
-	rClient, err := GetRedisClient(cnf.RedisURL)
+	rClient, err := RedisClient(cnf.RedisURL)
 	if err != nil {
 		return nil, err
 	}
 
-	log, err := GetLogger(cnf.Debug, cnf.EncodingLog)
+	log, err := Logger(cnf.Debug, cnf.EncodingLog)
 	if err != nil {
 		return nil, err
 	}
 
-	tgBot, err := GetTGBot(cnf.Token)
+	tgBot, err := TGBot(cnf.Token)
 	if err != nil {
 		return nil, err
 	}
 
-	mappingRepo := repo.NewMapping(rClient)
-	tgRepo := repo.NewTelegram(log)
+	mappingRepo := redis.NewMapping(rClient)
+	tgRepo := telegram.NewTelegram(log)
 	mappingUC := uc.NewMapping(mappingRepo, tgRepo)
 	mappingHandler := h.NewMapping(mappingUC, h.NewBotWrapper(tgBot, log))
 	return mappingHandler, nil
 }
 
 func transactionHandler(cnf config.Config) (*h.Transaction, error) {
-	log, err := GetLogger(cnf.Debug, cnf.EncodingLog)
+	log, err := Logger(cnf.Debug, cnf.EncodingLog)
 	if err != nil {
 		return nil, err
 	}
 
-	rClient, err := GetRedisClient(cnf.RedisURL)
+	rClient, err := RedisClient(cnf.RedisURL)
 	if err != nil {
 		return nil, err
 	}
@@ -149,38 +164,89 @@ func transactionHandler(cnf config.Config) (*h.Transaction, error) {
 		return nil, err
 	}
 
-	tgBot, err := GetTGBot(cnf.Token)
+	tgBot, err := TGBot(cnf.Token)
 	if err != nil {
 		return nil, err
 	}
 
-	tokenRepo := repo.NewToken(rClient)
-	apiRepo := repo.NewTransaction(log)
-	mappingRepo := repo.NewMapping(rClient)
+	// Initialize repositories
+	accountRepo := redis.NewAccount(rClient)
+	tokenRepo := redis.NewToken(rClient)
+	apiRepo := mono.NewMono(log)
+	mappingRepo := redis.NewMapping(rClient)
+	// Initialize use cases
 	tokenUC := uc.NewToken(tokenRepo)
+	accountUC := uc.NewAccount(accountRepo)
 	apiUC := uc.NewTransaction(apiRepo, mappingRepo, log, *dateUC)
-	transactionHandler := h.NewTransaction(tokenUC, apiUC, h.NewBotWrapper(tgBot, log))
+
+	transactionHandler := h.NewTransaction(tokenUC, accountUC, apiUC, h.NewBotWrapper(tgBot, log))
 	return transactionHandler, nil
 }
 
 func tokenHandler(cnf config.Config) (*h.Token, error) {
-	rClient, err := GetRedisClient(cnf.RedisURL)
+	rClient, err := RedisClient(cnf.RedisURL)
 	if err != nil {
 		return nil, err
 	}
 
-	tgBot, err := GetTGBot(cnf.Token)
+	tgBot, err := TGBot(cnf.Token)
 	if err != nil {
 		return nil, err
 	}
 
-	log, err := GetLogger(cnf.Debug, cnf.EncodingLog)
+	log, err := Logger(cnf.Debug, cnf.EncodingLog)
 	if err != nil {
 		return nil, err
 	}
 
-	tokenRepo := repo.NewToken(rClient)
+	tokenRepo := redis.NewToken(rClient)
 	tokenUC := uc.NewToken(tokenRepo)
 	tokenHandler := h.NewToken(tokenUC, h.NewBotWrapper(tgBot, log))
+	return tokenHandler, nil
+}
+
+func clientInfoHandler(cnf config.Config) (*h.ClientInfo, error) {
+	log, err := Logger(cnf.Debug, cnf.EncodingLog)
+	if err != nil {
+		return nil, err
+	}
+
+	tgBot, err := TGBot(cnf.Token)
+	if err != nil {
+		return nil, err
+	}
+
+	rClient, err := RedisClient(cnf.RedisURL)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenRepo := redis.NewToken(rClient)
+	clientInfoRepo := mono.NewMono(log)
+	tokenUC := uc.NewToken(tokenRepo)
+	clientInfoUC := uc.NewClientInfo(clientInfoRepo)
+	clientInfo := h.NewClientInfo(tokenUC, clientInfoUC, h.NewBotWrapper(tgBot, log))
+	return clientInfo, nil
+}
+
+func accountHandler(cnf config.Config) (*h.Account, error) {
+	rClient, err := RedisClient(cnf.RedisURL)
+	if err != nil {
+		return nil, err
+	}
+
+	tgBot, err := TGBot(cnf.Token)
+	if err != nil {
+		return nil, err
+	}
+
+	log, err := Logger(cnf.Debug, cnf.EncodingLog)
+	if err != nil {
+		return nil, err
+	}
+
+	accountRepo := redis.NewAccount(rClient)
+	accountUC := uc.NewAccount(accountRepo)
+	tokenHandler := h.NewAccount(accountUC, h.NewBotWrapper(tgBot, log))
 	return tokenHandler, nil
 }

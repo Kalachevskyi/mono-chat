@@ -32,6 +32,8 @@ const (
 	MappingHandler
 	TransactionsHandler
 	TokenHandler
+	ClientInfoHandler
+	AccountHandler
 )
 
 // ErrStack - add stack to error, work with "github.com/pkg/errors" package

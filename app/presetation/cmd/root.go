@@ -21,7 +21,7 @@ import (
 	"github.com/urfave/cli"
 
 	"github.com/Kalachevskyi/mono-chat/config"
-	"github.com/Kalachevskyi/mono-chat/framework"
+	"github.com/Kalachevskyi/mono-chat/di"
 )
 
 // RootCMD - represents the main command for starting the application
@@ -76,7 +76,7 @@ func (r *RootCMD) serve(c *cli.Context) error {
 		return fmt.Errorf("can't validate config: err=%s", err.Error())
 	}
 
-	chat, err := framework.Build(r.conf)
+	chat, err := di.Build(r.conf)
 	if err != nil {
 		return err
 	}

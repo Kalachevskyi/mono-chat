@@ -27,6 +27,7 @@ import (
 )
 
 const mappingSufix = "_mapping"
+const mappingLines = 3
 
 //go:generate mockgen -destination=./mapping_mock_test.go -package=usecases -source=./mapping.go
 
@@ -67,7 +68,7 @@ func (c *Mapping) Parse(chatID int64, r io.Reader) error {
 
 	mapping := make(map[string]model.CategoryMapping)
 	for _, line := range lines {
-		if len(line) != 3 {
+		if len(line) != mappingLines {
 			return errors.New("mapping should have 3 column")
 		}
 

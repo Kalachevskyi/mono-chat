@@ -1,7 +1,7 @@
-# In this directory, run the following command to build this builder.
+# In this directory, run the following command to di this builder.
 # $ gcloud builds submit . --config=cloudbuild.yaml
 
 steps:
   # Start CI process.
-  - name: 'gcr.io/mono-chat-246322/go-ci'
+  - name: 'gcr.io/mono-264416/go-ci'
     args: ['make', 'ci']

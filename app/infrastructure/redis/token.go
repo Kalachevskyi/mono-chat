@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package repository is an data layer of application
-package repository
+// Package redis is an data layer of application
+package redis
 
 import (
 	"github.com/go-redis/redis"
@@ -35,6 +35,7 @@ func (t *Token) Set(key, token string) error {
 	if err := t.redisClient.Set(key, token, 0).Err(); err != nil {
 		return errors.WithStack(err)
 	}
+
 	return nil
 }
 
@@ -44,5 +45,6 @@ func (t *Token) Get(key string) (string, error) {
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
+
 	return val, nil
 }

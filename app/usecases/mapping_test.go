@@ -23,10 +23,12 @@ func TestMapping_Parse(t *testing.T) {
 	type fields struct {
 		mappingRepo func() uc.MappingRepo
 	}
+
 	type args struct {
 		chatID int64
 		r      func() io.Reader
 	}
+
 	tests := []struct {
 		name    string
 		fields  fields

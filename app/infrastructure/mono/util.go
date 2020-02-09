@@ -12,30 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package usecases is the business logic layer of the application.
-package usecases
+// Package mono is an data layer of application
+package mono
 
-//ReportHeader - report header enum
-type ReportHeader int
+import "io"
 
-const dateTimeReportPattern = "02.01.2006 15:04:05"
+// Logger - represents the application's logger interface
+type Logger interface {
+	Errorf(template string, args ...interface{})
+}
 
-// Str - returns a report header string
-func (r ReportHeader) Str() string { return months[r-1] }
-
-// Headers for csv report
-const (
-	DateHeader ReportHeader = 1 + iota
-	DescriptionHeader
-	CategoryHeader
-	BankCategoryHeader
-	AmountHeader
-)
-
-var months = [5]string{ //nolint:gochecknoglobals
-	"Date",
-	"Description",
-	"Category",
-	"Bank category",
-	"Amount",
+func closeBody(c io.Closer, log Logger) {
+	if err := c.Close(); err != nil {
+		log.Errorf("%+v", err)
+	}
 }

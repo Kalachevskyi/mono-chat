@@ -20,6 +20,8 @@ import (
 	"io"
 	"time"
 
+	"github.com/Kalachevskyi/mono-chat/app/model"
+
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/jinzhu/now"
 	"github.com/pkg/errors"
@@ -27,20 +29,26 @@ import (
 
 // TransactionUC - represents a use-case interface for processing business logic of "MonoBank" transactions API
 type TransactionUC interface {
-	GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error)
+	GetTransactions(token, account string, chatID int64, from time.Time, to time.Time) (io.Reader, error)
 	ParseDate(period string) (from time.Time, to time.Time, err error)
 	Locale() *time.Location
 }
 
 // NewTransaction - builds "NewTransaction" internal handler
-func NewTransaction(tokenUC TokenUC, apiUC TransactionUC, botWrapper *BotWrapper) *Transaction {
-	return &Transaction{tokenUC: tokenUC, TransactionUC: apiUC, BotWrapper: botWrapper}
+func NewTransaction(t TokenUC, a AccountUC, tr TransactionUC, b *BotWrapper) *Transaction {
+	return &Transaction{
+		tokenUC:       t,
+		transactionUC: tr,
+		BotWrapper:    b,
+		accountUC:     a,
+	}
 }
 
 // Transaction - represents an internal handler for processing "MonoBank" transactions API
 type Transaction struct {
 	tokenUC       TokenUC
-	TransactionUC TransactionUC
+	transactionUC TransactionUC
+	accountUC     AccountUC
 	*BotWrapper
 }
 
@@ -48,16 +56,17 @@ type Transaction struct {
 func (t *Transaction) Handle(u tg.Update) {
 	var (
 		from, to time.Time
-		timeNow  = now.New(time.Now().In(t.TransactionUC.Locale()))
+		timeNow  = now.New(time.Now().In(t.transactionUC.Locale()))
 	)
+
 	switch u.Message.Command() {
 	case getCommand:
-		fromTime, toTime, err := t.TransactionUC.ParseDate(u.Message.CommandArguments())
+		var err error
+		from, to, err = t.transactionUC.ParseDate(u.Message.CommandArguments())
 		if err != nil {
 			t.sendDefaultErr(u.Message.Chat.ID, err)
 			return
 		}
-		from, to = fromTime, toTime
 	case todayCommand:
 		from, to = timeNow.BeginningOfDay(), timeNow.EndOfDay()
 	case currentMonthCommand:
@@ -74,7 +83,18 @@ func (t *Transaction) Handle(u tg.Update) {
 		return
 	}
 
-	fileResp, err := t.TransactionUC.GetTransactions(token, chatID, from, to)
+	account, err := t.accountUC.Get(chatID)
+	if err == model.ErrNil {
+		t.sendMSG(tg.NewMessage(chatID, "Please set account."))
+		return
+	}
+
+	if err != nil {
+		t.sendDefaultErr(u.Message.Chat.ID, err)
+		return
+	}
+
+	fileResp, err := t.transactionUC.GetTransactions(token, account, chatID, from, to)
 	if err != nil {
 		t.sendDefaultErr(u.Message.Chat.ID, err)
 		return
