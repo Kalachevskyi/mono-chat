@@ -28,22 +28,24 @@ import (
 	"github.com/pkg/errors"
 )
 
-//go:generate mockgen -destination=./transaction_mock_test.go -package=usecases -source=./transaction.go
+const accuracy = 100
+
+//go:generate mockgen -destination=./mono_mock_test.go -package=usecases -source=./transaction.go
 
 // Logger - represents the application's logger interface
 type Logger interface {
 	Error(args ...interface{})
 }
 
-// TransactionRepo - represents Transaction repository interface
-type TransactionRepo interface {
-	GetTransactions(token string, from time.Time, to time.Time) ([]model.Transaction, error)
+// MonoRepo - represents Transaction repository interface
+type MonoRepo interface {
+	GetTransactions(token, account string, from, to time.Time) ([]model.Transaction, error)
 }
 
 type categoryMapping map[string]model.CategoryMapping
 
 // NewTransaction - builds Transaction report use-case
-func NewTransaction(trRepo TransactionRepo, mapRepo MappingRepo, log Logger, date Date) *Transaction {
+func NewTransaction(trRepo MonoRepo, mapRepo MappingRepo, log Logger, date Date) *Transaction {
 	return &Transaction{
 		apiRepo:     trRepo,
 		mappingRepo: mapRepo,
@@ -54,15 +56,15 @@ func NewTransaction(trRepo TransactionRepo, mapRepo MappingRepo, log Logger, dat
 
 // Transaction - represents Transaction  use-case for processing bank Transactions
 type Transaction struct {
-	apiRepo     TransactionRepo
+	apiRepo     MonoRepo
 	mappingRepo MappingRepo
 	log         Logger
 	Date
 }
 
 // GetTransactions - get bank transactions, convert it to app csv report
-func (a *Transaction) GetTransactions(token string, chatID int64, from time.Time, to time.Time) (io.Reader, error) {
-	transactions, err := a.apiRepo.GetTransactions(token, from, to)
+func (a *Transaction) GetTransactions(token, account string, chatID int64, from, to time.Time) (io.Reader, error) {
+	transactions, err := a.apiRepo.GetTransactions(token, account, from, to)
 	if err != nil {
 		return nil, err
 	}
@@ -82,13 +84,14 @@ func (a *Transaction) GetTransactions(token string, chatID int64, from time.Time
 		description := strings.Replace(tr.Description, "\n", " ", -1)
 		category := strconv.Itoa(tr.Mcc)
 		bankCategory := strconv.Itoa(tr.Mcc)
-		amount := fmt.Sprintf("%.2f", float64(tr.Amount)/100)
+		amount := fmt.Sprintf("%.2f", float64(tr.Amount)/accuracy)
 		unixTime := time.Unix(int64(tr.Time), 0).In(a.loc)
 		date := unixTime.Format(dateTimeReportPattern)
 
 		if c, err := a.mapCategory(catMap, category, description); err == nil {
 			category = c
 		}
+
 		record := []string{date, description, category, bankCategory, amount}
 		records = append(records, record)
 	}

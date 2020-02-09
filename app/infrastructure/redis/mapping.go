@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package infrastructure is an data layer of application
+// Package redis is an data layer of application
 package redis
 
 import (
@@ -43,6 +43,7 @@ func (t *Mapping) Set(key string, val map[string]model.CategoryMapping) error {
 	if err := t.redisClient.Set(key, string(mapping), 0).Err(); err != nil {
 		return errors.WithStack(err)
 	}
+
 	return nil
 }
 
@@ -57,5 +58,6 @@ func (t *Mapping) Get(key string) (map[string]model.CategoryMapping, error) {
 	if err := json.Unmarshal([]byte(val), &mapping); err != nil {
 		return nil, errors.WithStack(err)
 	}
+
 	return mapping, nil
 }

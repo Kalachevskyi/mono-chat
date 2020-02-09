@@ -8,7 +8,7 @@ test:
 
 lint:
 	@ echo "-> Running linters ..."
-	@ golangci-lint run --exclude-use-default=false
+	@ golangci-lint run --exclude-use-default=false --tests=false
 	@ echo "-> Done!"
 .PHONY: lint
 

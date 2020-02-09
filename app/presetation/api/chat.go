@@ -30,6 +30,8 @@ const (
 	todayCommand        = "today"
 	currentMonthCommand = "month"
 	tokenCommand        = "token"
+	accountCommand      = "account"
+	infoCommand         = "info"
 )
 
 // Logger - represents the application's logger interface
@@ -79,6 +81,7 @@ func (c *Chat) Handle() {
 					continue
 				}
 			}
+
 			continue
 		}
 
@@ -91,6 +94,19 @@ func (c *Chat) Handle() {
 				}
 			case tokenCommand:
 				if h, ok := c.handlers[TokenHandler]; ok {
+					h.Handle(u)
+					continue
+				}
+				return
+			case accountCommand:
+				if h, ok := c.handlers[AccountHandler]; ok {
+					h.Handle(u)
+
+					continue
+				}
+				return
+			case infoCommand:
+				if h, ok := c.handlers[ClientInfoHandler]; ok {
 					h.Handle(u)
 					continue
 				}

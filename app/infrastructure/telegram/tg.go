@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package repository is an data layer of application
+// Package telegram is an data layer of application
 package telegram
 
 import (
@@ -38,7 +38,6 @@ type Telegram struct {
 func (c *Telegram) GetFile(url string) (io.ReadCloser, error) {
 	resp, err := http.Get(url) //nolint
 	if err != nil {
-
 		return nil, errors.Errorf("can't get file by url: %s", url)
 	}
 

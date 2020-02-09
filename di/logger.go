@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package framework is an application layer for initializing app components
-package framework
+// Package di is an application layer for initializing app components
+package di
 
 import (
 	"sync"
@@ -26,16 +26,17 @@ var (
 	loggerOnce sync.Once          //nolint:gochecknoglobals
 )
 
-// GetLogger - initialize "zap" logger, returns sugared instance of logger
-func GetLogger(debug bool, encodingLog string) (*zap.SugaredLogger, error) {
+// Logger - initialize "zap" logger, returns sugared instance of logger
+func Logger(debug bool, encodingLog string) (*zap.SugaredLogger, error) {
 	var err error
+
 	loggerOnce.Do(func() {
 		zConf := zap.Config{
 			Level:       zap.NewAtomicLevelAt(zap.InfoLevel),
 			Development: debug,
 			Sampling: &zap.SamplingConfig{
-				Initial:    100,
-				Thereafter: 100,
+				Initial:    100, //nolint:gomnd
+				Thereafter: 100, //nolint:gomnd
 			},
 			Encoding:          encodingLog,
 			EncoderConfig:     zap.NewProductionEncoderConfig(),

@@ -12,10 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package telegram is an data layer of application
-package telegram
+// Package mono is an data layer of application
+package mono
+
+import "io"
 
 // Logger - represents the application's logger interface
 type Logger interface {
 	Errorf(template string, args ...interface{})
+}
+
+func closeBody(c io.Closer, log Logger) {
+	if err := c.Close(); err != nil {
+		log.Errorf("%+v", err)
+	}
 }

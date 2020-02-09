@@ -27,9 +27,11 @@ import (
 	"github.com/pkg/errors"
 )
 
-const csvSuffix = ".csv"
-
-const errWriteLine = "can't write line: line=%v err=%v"
+const (
+	csvSuffix    = ".csv"
+	errWriteLine = "can't write line: line=%v err=%v"
+	reportLines  = 10
+)
 
 // TelegramRepo - represents Telegram repository interface
 type TelegramRepo interface {
@@ -65,6 +67,7 @@ func (c *FileReport) Validate(name string) error {
 	if !strings.HasSuffix(name, csvSuffix) {
 		return errors.New(`chat can only be processed using the file "csv"`)
 	}
+
 	return nil
 }
 
@@ -84,12 +87,14 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 		AmountHeader.Str(),
 	}
 	buf := &bytes.Buffer{}
+
 	wr := csv.NewWriter(buf)
 	if err := wr.Write(header); err != nil {
 		return nil, errors.Errorf(errWriteLine, header, err)
 	}
 
 	key := fmt.Sprintf("%s%s", strconv.Itoa(int(chatID)), mappingSufix)
+
 	catMap, err := c.mappingRepo.Get(key) //Category mapping
 	if err != nil {
 		c.log.Error(err)
@@ -101,7 +106,7 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 	}
 
 	for _, line := range lines {
-		if len(line) != 10 { //10 - default columns in a mono bank template
+		if len(line) != reportLines {
 			return nil, errors.New("report template does not match, should be 10")
 		}
 
@@ -132,6 +137,7 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 			return nil, errors.Errorf(errWriteLine, record, err)
 		}
 	}
+
 	wr.Flush()
 	return buf, nil
 }
