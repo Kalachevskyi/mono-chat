@@ -1,6 +1,6 @@
 linters-settings:
   golint:
-    min-confidence: 0
+    min-confidence: 1
   gocyclo:
     min-complexity: 20
   maligned:

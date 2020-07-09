@@ -1,4 +1,3 @@
-// Package model is an implementation of core application objects
 package model
 
 // ClientInfo - represents clients information struct

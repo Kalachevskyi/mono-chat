@@ -1,4 +1,3 @@
-// Package redis is an data layer of application
 package redis
 
 import (
