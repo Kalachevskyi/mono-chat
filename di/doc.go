@@ -12,10 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package telegram is an data layer of application
-package telegram
-
-// Logger - represents the application's logger interface
-type Logger interface {
-	Errorf(template string, args ...interface{})
-}
+// Package di is an application layer for initializing app components
+package di

@@ -1,4 +1,3 @@
-// Package usecases is the business logic layer of the application.
 package usecases
 
 import "fmt"

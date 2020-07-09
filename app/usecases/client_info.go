@@ -1,4 +1,3 @@
-// Package usecases is the business logic layer of the application.
 package usecases
 
 import "github.com/Kalachevskyi/mono-chat/app/model"

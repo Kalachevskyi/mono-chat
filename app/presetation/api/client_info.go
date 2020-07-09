@@ -1,4 +1,3 @@
-// Package api is an interface adapters of application
 package api
 
 import (

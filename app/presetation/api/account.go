@@ -1,4 +1,3 @@
-// Package api is the business logic layer of the application.
 package api
 
 import tg "github.com/go-telegram-bot-api/telegram-bot-api"
