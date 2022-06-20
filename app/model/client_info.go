@@ -1,6 +1,6 @@
 package model
 
-// ClientInfo - represents clients information struct
+// ClientInfo - represents clients information struct.
 type ClientInfo struct {
 	ClientID string `json:"clientId"`
 	Name     string `json:"name"`

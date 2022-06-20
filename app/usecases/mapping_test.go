@@ -40,7 +40,8 @@ func TestMapping_Parse(t *testing.T) {
 			fields: fields{
 				mappingRepo: func() uc.MappingRepo {
 					return NewMockMappingRepo(mockCtrl)
-				}},
+				},
+			},
 			args: args{
 				chatID: 0,
 				r: func() io.Reader {
@@ -56,7 +57,8 @@ func TestMapping_Parse(t *testing.T) {
 			fields: fields{
 				mappingRepo: func() uc.MappingRepo {
 					return NewMockMappingRepo(mockCtrl)
-				}},
+				},
+			},
 			args: args{
 				chatID: 0,
 				r: func() io.Reader {

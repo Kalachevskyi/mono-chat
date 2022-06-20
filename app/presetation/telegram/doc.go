@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package api is an interface adapters of application
-package api
+// Package telegram is an interface adapters of application
+package telegram

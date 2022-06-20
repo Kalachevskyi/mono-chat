@@ -5,10 +5,11 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
-	"strconv"
+	"net/url"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -18,9 +19,9 @@ const (
 	reportLines  = 10
 )
 
-// TelegramRepo - represents Telegram repository interface
+// TelegramRepo - represents Telegram repository interface.
 type TelegramRepo interface {
-	GetFile(url string) (io.ReadCloser, error)
+	GetFile(u *url.URL) (io.ReadCloser, error)
 }
 
 type filter struct {
@@ -29,8 +30,8 @@ type filter struct {
 	truncate time.Duration
 }
 
-// NewFileReport - builds File report use-case
-func NewFileReport(date Date, mappingRepo MappingRepo, log Logger, telegramRepo TelegramRepo) *FileReport {
+// NewFileReport - builds File report use-case.
+func NewFileReport(date *Date, mappingRepo MappingRepo, log Logger, telegramRepo TelegramRepo) *FileReport {
 	return &FileReport{
 		date:         date,
 		mappingRepo:  mappingRepo,
@@ -39,15 +40,15 @@ func NewFileReport(date Date, mappingRepo MappingRepo, log Logger, telegramRepo 
 	}
 }
 
-// FileReport - represents File report use-case for processing file report
+// FileReport - represents File report use-case for processing file report.
 type FileReport struct {
-	date        Date
+	date        *Date
 	mappingRepo MappingRepo
 	log         Logger
 	TelegramRepo
 }
 
-// Validate - validate file name by suffix ".csv"
+// Validate - validate file name by suffix ".csv".
 func (c *FileReport) Validate(name string) error {
 	if !strings.HasSuffix(name, csvSuffix) {
 		return errors.New(`chat can only be processed using the file "csv"`)
@@ -56,14 +57,14 @@ func (c *FileReport) Validate(name string) error {
 	return nil
 }
 
-// Parse - parse MonoBank "csv" report, convert it to application format
-func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reader, error) {
+// Parse - parse MonoBank "csv" report, convert it to application format.
+func (c *FileReport) Parse(userID uuid.UUID, fileName string, r io.Reader) (io.Reader, error) {
 	lines, err := csv.NewReader(r).ReadAll()
 	if err != nil {
 		return nil, errors.Errorf("can't read file: err=%s", err)
 	}
 
-	//Set header to file
+	// Set header to file
 	header := []string{
 		DateHeader.Str(),
 		DescriptionHeader.Str(),
@@ -78,9 +79,9 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 		return nil, errors.Errorf(errWriteLine, header, err)
 	}
 
-	key := fmt.Sprintf("%s%s", strconv.Itoa(int(chatID)), mappingSufix)
+	key := fmt.Sprintf("%s_%s", mappingKey, userID)
 
-	catMap, err := c.mappingRepo.Get(key) //Category mapping
+	catMap, err := c.mappingRepo.Get(key) // Category mapping
 	if err != nil {
 		c.log.Error(err)
 	}
@@ -96,7 +97,7 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 		}
 
 		date, category, bankCategory, description, amount := line[0], line[2], line[2], line[1], line[3]
-		description = strings.Replace(description, "\n", " ", -1)
+		description = strings.ReplaceAll(description, "\n", " ")
 
 		if filter != nil {
 			dateTime, err := time.Parse(dateTimeReportPattern, date)
@@ -124,6 +125,7 @@ func (c *FileReport) Parse(chatID int64, fileName string, r io.Reader) (io.Reade
 	}
 
 	wr.Flush()
+
 	return buf, nil
 }
 

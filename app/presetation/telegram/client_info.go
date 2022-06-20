@@ -1,48 +1,59 @@
-package api
+package telegram
 
 import (
 	"fmt"
 
-	"github.com/Kalachevskyi/mono-chat/app/model"
 	tg "github.com/go-telegram-bot-api/telegram-bot-api"
+
+	"github.com/Kalachevskyi/mono-chat/app/model"
 )
 
 const accuracy = 100
 
-// ClientInfoUC - represents Client Info use case
+// ClientInfoUC - represents Client Info use case.
 type ClientInfoUC interface {
 	GetClientInfo(token string) (model.ClientInfo, error)
 }
 
-// NewClientInfo - represents ClientInfo constructor
-func NewClientInfo(tokenUC TokenUC, clientInfoUC ClientInfoUC, botWrapper *BotWrapper) *ClientInfo {
+// NewClientInfo - represents ClientInfo constructor.
+func NewClientInfo(tokenUC TokenUC, clientInfoUC ClientInfoUC, chatUserUC ChatUserUC, botWrapper *BotWrapper) *ClientInfo {
 	return &ClientInfo{
 		tokenUC:      tokenUC,
 		clientInfoUC: clientInfoUC,
+		chatUserUC:   chatUserUC,
 		BotWrapper:   botWrapper,
 	}
 }
 
-// ClientInfo - represents ClientInfo handler struct
+// ClientInfo - represents ClientInfo handler struct.
 type ClientInfo struct {
 	tokenUC      TokenUC
 	clientInfoUC ClientInfoUC
+	chatUserUC   ChatUserUC
 	*BotWrapper
 }
 
-// Handle  - represents ClientInfo handler
+// Handle  - represents ClientInfo handler.
 func (c *ClientInfo) Handle(u tg.Update) {
-	chatID := u.Message.Chat.ID
-
-	token, err := c.tokenUC.Get(chatID)
+	userID, err := c.chatUserUC.GetChatUserID(u.Message.Chat.ID)
 	if err != nil {
 		c.sendDefaultErr(u.Message.Chat.ID, err)
+
+		return
+	}
+
+	chatID := u.Message.Chat.ID
+	token, err := c.tokenUC.Get(userID)
+	if err != nil {
+		c.sendDefaultErr(chatID, err)
+
 		return
 	}
 
 	clientInfo, err := c.clientInfoUC.GetClientInfo(token)
 	if err != nil {
-		c.sendDefaultErr(u.Message.Chat.ID, err)
+		c.sendDefaultErr(chatID, err)
+
 		return
 	}
 

@@ -2,7 +2,7 @@ package mono
 
 import "io"
 
-// Logger - represents the application's logger interface
+// Logger - represents the application's logger interface.
 type Logger interface {
 	Errorf(template string, args ...interface{})
 }

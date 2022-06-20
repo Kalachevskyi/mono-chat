@@ -6,6 +6,9 @@ require (
 	github.com/go-redis/redis v6.15.2+incompatible
 	github.com/go-telegram-bot-api/telegram-bot-api v4.6.4+incompatible
 	github.com/golang/mock v1.3.1
+	github.com/google/uuid v1.3.0
+	github.com/google/wire v0.5.0
+	github.com/gorilla/mux v1.8.0
 	github.com/jinzhu/now v1.0.1
 	github.com/kyoh86/richgo v0.3.3 // indirect
 	github.com/kyoh86/xdg v1.0.0 // indirect

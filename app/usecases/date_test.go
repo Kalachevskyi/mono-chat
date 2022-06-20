@@ -56,7 +56,7 @@ func TestDate_parseTime(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		d, _ := NewDate(nil)
+		d, _ := NewDateOld(nil)
 		got, err := d.parseDate(tt.args.fromStr, tt.args.toStr)
 		Ω(tt.wantErr).To(Equal(err != nil), errNotEqual)
 		Ω(got).To(Equal(tt.want(d.loc)), errNotEqual)
