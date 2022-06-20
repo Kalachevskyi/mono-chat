@@ -1,4 +1,4 @@
-package api
+package telegram
 
 import (
 	"fmt"
@@ -8,10 +8,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-// HandlerKey - type for naming handlers
+// HandlerKey - type for naming handlers.
 type HandlerKey int
 
-// Handlers keys
+// Handlers keys.
 const (
 	FileReportHandler HandlerKey = 1 + iota
 	MappingHandler
@@ -19,9 +19,10 @@ const (
 	TokenHandler
 	ClientInfoHandler
 	AccountHandler
+	ChatUserHandler
 )
 
-// ErrStack - add stack to error, work with "github.com/pkg/errors" package
+// ErrStack - add stack to error, work with "github.com/pkg/errors" package.
 func ErrStack(err error) error {
 	if err == nil {
 		return err
@@ -36,12 +37,12 @@ func close(closer io.Closer, log Logger) {
 	}
 }
 
-// NewBotWrapper - builds "NewBotWrapper"
+// NewBotWrapper - builds "NewBotWrapper".
 func NewBotWrapper(bot *tg.BotAPI, log Logger) *BotWrapper {
 	return &BotWrapper{bot: bot, log: log}
 }
 
-// BotWrapper - represents the Telegram chatbot wrapper, register an error if it occurred
+// BotWrapper - represents the Telegram chatbot wrapper, register an error if it occurred.
 type BotWrapper struct {
 	bot *tg.BotAPI
 	log Logger

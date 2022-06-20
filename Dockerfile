@@ -1,29 +1,22 @@
-FROM golang as builder
+FROM golang:1.15.5-alpine3.12 as builder
 
-# Copy the local package files to the container's workspace.
-ADD . /go/src/github.com/Kalachevskyi/mono-chat
+ENV GO111MODULE=on
+ENV CGO_ENABLED=0
 
-# Changing working directory.
-WORKDIR /go/src/github.com/Kalachevskyi/mono-chat
+WORKDIR /src
 
-# Download dependencies
-RUN export GO111MODULE=on && go mod download && go mod vendor
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
 
-# Building application.
-RUN go build -o mono-chat main.go
+COPY . .
+RUN go build  -o /go/bin/mono_bot .
 
-######### Start a new stage from alpine #######
-FROM alpine:latest
+FROM alpine:3.12
 
-RUN apk --no-cache add ca-certificates
-RUN mkdir /lib64 && ln -s /lib/libc.musl-x86_64.so.1 /lib64/ld-linux-x86-64.so.2
+RUN apk update
 RUN apk add tzdata
 
-# Changing working directory.
-WORKDIR /root/
+COPY --from=builder /go/bin/mono_bot /bin/mono_bot
 
-# Copy the Pre-built binary file from the previous stage
-COPY --from=builder /go/src/github.com/Kalachevskyi/mono-chat/mono-chat .
-
-# Run service
-ENTRYPOINT [ "sh", "-c", "./mono-chat --token=$TOKEN --timeout=$TIMEOUT --redis_url=$REDIS_URL" ]
+ENTRYPOINT sh -c "/bin/mono_bot --token=$TOKEN --timeout=$TIMEOUT --redis_url=$REDIS_URL"

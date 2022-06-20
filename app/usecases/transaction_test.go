@@ -27,7 +27,7 @@ func TestNewTransaction(t *testing.T) {
 func TestTransaction_GetTransactions(t *testing.T) {
 	RegisterTestingT(t)
 	mockCtrl := gomock.NewController(t)
-	date, _ := uc.NewDate(nil)
+	date, _ := uc.NewDateOld(nil)
 
 	type args struct {
 		token   string

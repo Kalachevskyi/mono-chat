@@ -46,15 +46,15 @@ func (mr *MockMappingRepoMockRecorder) Set(key, val interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockMappingRepo)(nil).Set), key, val)
 }
 
-// Get mocks base method
+// CheckUser mocks base method
 func (m *MockMappingRepo) Get(key string) (map[string]model.CategoryMapping, error) {
-	ret := m.ctrl.Call(m, "Get", key)
+	ret := m.ctrl.Call(m, "CheckUser", key)
 	ret0, _ := ret[0].(map[string]model.CategoryMapping)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get
+// CheckUser indicates an expected call of CheckUser
 func (mr *MockMappingRepoMockRecorder) Get(key interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockMappingRepo)(nil).Get), key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckUser", reflect.TypeOf((*MockMappingRepo)(nil).Get), key)
 }

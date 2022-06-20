@@ -5,8 +5,9 @@
 package usecases_test
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockTokenRepo is a mock of TokenRepo interface
@@ -44,15 +45,15 @@ func (mr *MockTokenRepoMockRecorder) Set(key, token interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockTokenRepo)(nil).Set), key, token)
 }
 
-// Get mocks base method
+// CheckUser mocks base method
 func (m *MockTokenRepo) Get(key string) (string, error) {
-	ret := m.ctrl.Call(m, "Get", key)
+	ret := m.ctrl.Call(m, "CheckUser", key)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get
+// CheckUser indicates an expected call of CheckUser
 func (mr *MockTokenRepoMockRecorder) Get(key interface{}) *gomock.Call {
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockTokenRepo)(nil).Get), key)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckUser", reflect.TypeOf((*MockTokenRepo)(nil).Get), key)
 }

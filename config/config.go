@@ -19,7 +19,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Config - app configuration
+// Config - app configuration.
 type Config struct {
 	Token       string // Telegram token
 	Debug       bool   // Debug mod
@@ -27,9 +27,10 @@ type Config struct {
 	Timeout     int
 	EncodingLog string // Valid values are "json" and "console",
 	RedisURL    string // Example localhost:6379
+	HTTPPort    int
 }
 
-// Validate - verify app configuration
+// Validate - verify app configuration.
 func (c *Config) Validate() error {
 	if c.Token == "" {
 		return errors.New(`config parameter "token" can't be empty`)

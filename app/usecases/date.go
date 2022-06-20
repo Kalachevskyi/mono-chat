@@ -7,26 +7,25 @@ import (
 	"time"
 
 	"github.com/jinzhu/now"
-
 	"github.com/pkg/errors"
 )
 
-// TimeLocation - application location
+// TimeLocation - application location.
 const timeLocation = "Europe/Kiev"
 
-//timeDurationDay - time duration for days
+// timeDurationDay - time duration for days.
 const timeDurationDay = 24 * time.Hour
 
-//Date patterns
+// Date patterns.
 const (
 	yearMonthPattern = "01.2006"
 	datePattern      = "02.01.2006"
 	dateTimePattern  = "02.01.2006T15.04"
 )
 
-// Default regexp patterns for Date
+// Default regexp patterns for Date.
 const (
-	ddPattern        = `^\d{1,2}-\d{1,2}` //range of date for the current month/year
+	ddPattern        = `^\d{1,2}-\d{1,2}` // range of date for the current month/year
 	ddmmyyyyPattern  = `\d{2}\.\d{2}\.\d{4}-\d{2}\.\d{2}\.\d{4}`
 	ddmmyyyytPattern = `\d{2}\.\d{2}\.\d{4}T\d{2}\.\d{2}-\d{2}\.\d{2}\.\d{4}T\d{2}\.\d{2}`
 )
@@ -39,9 +38,9 @@ var (
 
 const errParseTime = "can't parse time"
 
-// NewDate - Date type constructor
-// "loc" - can be empty, default parameter "Europe/Kiev"
-func NewDate(loc *time.Location) (*Date, error) {
+// NewDateOld - Date type constructor
+// "loc" - can be empty, default parameter "Europe/Kiev".
+func NewDateOld(loc *time.Location) (*Date, error) {
 	if loc != nil {
 		return &Date{loc: loc}, nil
 	}
@@ -54,7 +53,13 @@ func NewDate(loc *time.Location) (*Date, error) {
 	return &Date{loc: loc}, nil
 }
 
-// Date - precompiled regex for dates, time location
+// NewDate - Date type constructor
+// "loc" - can be empty, default parameter "Europe/Kiev".
+func NewDate(loc *time.Location) *Date {
+	return &Date{loc: loc}
+}
+
+// Date - precompiled regex for dates, time location.
 type Date struct {
 	loc *time.Location
 }
@@ -64,7 +69,7 @@ func (d Date) getFilter(name string) (*filter, error) {
 	datesSetLen := 2
 
 	dates := strings.Split(name, "-")
-	if len(dates) != datesSetLen { //2 - must have two date by - separator
+	if len(dates) != datesSetLen { // 2 - must have two date by - separator
 		return nil, errors.New("can't split dates by -")
 	}
 
@@ -83,7 +88,7 @@ func (d Date) getFilter(name string) (*filter, error) {
 	return nil, errors.New("can't find date pattern")
 }
 
-// prepareDays - prepare "from, to" dates adding current month/year
+// prepareDays - prepare "from, to" dates adding current month/year.
 func (d Date) prepareDays(fromStr, toStr string) (from, to string) {
 	yearMonth := time.Now().Format(yearMonthPattern)
 	prefix := "0"
@@ -103,7 +108,7 @@ func (d Date) prepareDays(fromStr, toStr string) (from, to string) {
 	return from, to
 }
 
-//parseDate - parse range of time according layout, exclude time
+// parseDate - parse range of time according layout, exclude time.
 func (d Date) parseDate(fromStr, toStr string) (*filter, error) {
 	from, err := time.ParseInLocation(datePattern, fromStr, d.loc)
 	if err != nil {
@@ -124,7 +129,7 @@ func (d Date) parseDate(fromStr, toStr string) (*filter, error) {
 	return &filter, nil
 }
 
-//parseDateTime - parse range of time according layout
+// parseDateTime - parse range of time according layout.
 func (d Date) parseDateTime(fromStr, toStr string) (*filter, error) {
 	from, err := time.ParseInLocation(dateTimePattern, fromStr, d.loc)
 	if err != nil {

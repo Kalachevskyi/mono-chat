@@ -1,4 +1,4 @@
-# In this directory, run the following command to di this builder.
+# In this directory, run the following command to old_di this builder.
 # $ gcloud builds submit . --config=cloudbuild.yaml
 
 steps:

@@ -1,6 +1,6 @@
 package model
 
-// Transaction - represents monobank's transaction entity
+// Transaction - represents monobank's transaction entity.
 type Transaction struct {
 	ID              string `json:"id"`
 	Time            int    `json:"time"`

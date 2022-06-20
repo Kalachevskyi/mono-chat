@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Kalachevskyi/mono-chat/app/adapters/telegram"
-
 	"github.com/pkg/errors"
 
 	"github.com/Kalachevskyi/mono-chat/app/model"
@@ -18,21 +16,21 @@ const (
 	tokenMonoKey = "X-Token"
 )
 
-// NewMono - builds Mono repository
-func NewMono(log telegram.Logger) *Mono {
+// NewMono - builds Mono repository.
+func NewMono(log Logger) *Mono {
 	return &Mono{log: log}
 }
 
-// Mono - represents the Mono repository for getting transaction from MonoBank api
+// Mono - represents the Mono repository for getting transaction from MonoBank telegram.
 type Mono struct {
 	log Logger
 }
 
-// GetTransactions - return Transactions from MonoBank
+// GetTransactions - return Transactions from MonoBank.
 func (m *Mono) GetTransactions(token, account string, from, to time.Time) ([]model.Transaction, error) {
 	url := fmt.Sprintf("%s/personal/statement/%s/%d/%d", domainMono, account, from.Unix(), to.Unix())
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil) // nolint:noctx
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
@@ -54,11 +52,11 @@ func (m *Mono) GetTransactions(token, account string, from, to time.Time) ([]mod
 	return transactions, nil
 }
 
-// GetClientInfo - returns information about accounts (card, currency)
+// GetClientInfo - returns information about accounts (card, currency).
 func (m Mono) GetClientInfo(token string) (c model.ClientInfo, err error) {
 	url := fmt.Sprintf("%s/personal/client-info", domainMono)
 
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	req, err := http.NewRequest(http.MethodGet, url, nil) // nolint:noctx
 	if err != nil {
 		return c, errors.WithStack(err)
 	}

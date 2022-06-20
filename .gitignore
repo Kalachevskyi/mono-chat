@@ -2,6 +2,9 @@
 bin/
 pkg/
 
+# Idea ignore
+.idea/
+
 #Bat
 *.bat
 
@@ -18,3 +21,6 @@ Desktop.ini
 .DS_Store
 
 cover-all.out
+
+# ignore vendor pakages
+/vendor/
